@@ -24,6 +24,7 @@ double pop(struct stack_t* stack) {
         stack->head = stack_node->next;
         stack->size--;
         double res = stack_node->value;
+        printf("\nvalue to be pooped %lf\n", res);
         free(stack_node);
         return res;
     }

@@ -10,8 +10,6 @@
 #define LITERAL_UPPER_BOUND 10
 
 
-#define A(r, c) dataset[r * num_entries + c]
-
 int nodes[3] = {CT_LITERAL, CT_DATASET_VAR, CT_OPERATOR};
 int operators[4] = {OP_TIMES, OP_PLUS, OP_MINUS, OP_DIVIDE};
 int dataset[6] = {1, 4, 3, 10, 10, 31};
@@ -58,21 +56,6 @@ int get_random(int lower, int upper) {
     return (rand() % (upper - lower + 1)) + lower;
 }
 
-void printPostorder(struct node_t* node) 
-{ 
-    if (node == NULL) {
-        return; 
-    }        
-  
-    // first recur on left subtree 
-    printPostorder(node->left); 
-  
-    // then recur on right subtree 
-    printPostorder(node->right); 
-  
-    // now deal with the node 
-    
-} 
 
 /*int main() {
     srand(time(0));
