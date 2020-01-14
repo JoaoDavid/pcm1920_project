@@ -28,41 +28,50 @@ void processTree(const double *dataset, int tree_id, struct stack_t* stack, stru
 }
 
 void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node) {
+    //toString(stack);
     switch(node->c_type){
         case CT_LITERAL:{
+            printf("double is %d\n",node->content.literal );
+            toString(stack);
             push(stack, (double)node->content.literal);
-            //break;
+            toString(stack);
+            printf("peek %f\n",peek(stack));
+            break;
         }
         case CT_DATASET_VAR:{
             //push(stack, dataset[tree_id][node->content.index_in_dataset]);
             push(stack, A(tree_id, node->content.index_in_dataset));            
-            //break;
+            break;
         }
         case CT_OPERATOR:{
             switch(node->content.operator_code){
                 case OP_TIMES:{
                     double result = pop(stack) * pop(stack);
+                    
                     push(stack, result);
-                    //break;
+                    break;
                 }
                 case OP_PLUS:{
-                    double result = pop(stack) + pop(stack);
+                    double first = pop(stack);
+                    double second = pop(stack);
+                    double result = first + second;
+                    //double result = pop(stack) + pop(stack);
+                    printf("%f + %f = %f\n", first, second, result);
                     push(stack, result);
-                    //break;
+                    break;
                 }
                 case OP_MINUS:{
                     double result = pop(stack) - pop(stack);
                     push(stack, result);
-                    //break;
+                    break;
                 }
                 case OP_DIVIDE:{
                     double result = pop(stack) / pop(stack);
                     push(stack, result);
-                    //break;
+                    break;
                 }
             }
-
-            //break;
+            break;
         }
     }
 }
@@ -89,7 +98,7 @@ int main(int argc, char *argv[]) {
     root->right->left = create_node(CT_LITERAL, 3);
     root->right->right = create_node(CT_LITERAL, 5);
     /* 4 becomes left child of 2 
-           * 
+           + 
          /   \ 
         2      + 
      /    \    /  \ 
@@ -97,13 +106,14 @@ int main(int argc, char *argv[]) {
     */
     processTree(dataset, 0, stack, root);
     double res = pop(stack);
-    printf("resultado %lf", res);
+    printf("resultado %f ", res);
     node_destroy(root);
     /*struct stack_t* stack = create_stack();
     push(stack, 3.9);
     push(stack, 1.4);
     push(stack, 2);
     push(stack, -10);
+    toString(stack);
     printf("\n%lf", pop(stack));printf("\n%lf", pop(stack));printf("\n%lf", pop(stack));printf("\n%lf", pop(stack));*/
 
 }

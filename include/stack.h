@@ -21,4 +21,8 @@ double peek(struct stack_t* stack);
 
 int isEmpty(struct stack_t* stack);
 
+void toString(struct stack_t* stack);
+
+void toStringAux(struct stack_node_t* node_stack);
+
 #endif

@@ -3,6 +3,8 @@
 
 #include "../include/stack.h"
 
+
+
 struct stack_t* create_stack() {
     struct stack_t* stack = (struct stack_t*)malloc(sizeof(struct stack_t));
     stack->head = NULL;
@@ -24,9 +26,12 @@ double pop(struct stack_t* stack) {
         stack->head = stack_node->next;
         stack->size--;
         double res = stack_node->value;
-        printf("\nvalue to be pooped %lf\n", res);
+        //printf("value to be pooped %lf\n", res);
         free(stack_node);
         return res;
+    } else {
+        printf("entrou no pop vazio\n");
+        return -1;
     }
 }
 
@@ -42,4 +47,17 @@ int isEmpty(struct stack_t* stack) {
 
 int size(struct stack_t* stack) {
     return stack->size;
+}
+
+void toString(struct stack_t* stack) {
+    printf("HEAD: ");
+    toStringAux(stack->head);
+    printf("\n");
+}
+
+void toStringAux(struct stack_node_t* node_stack) {
+    if (node_stack != NULL){
+        printf("%f |", node_stack->value);
+        toStringAux(node_stack->next);
+    }
 }
