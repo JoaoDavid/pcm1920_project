@@ -6,20 +6,20 @@
 #include "../include/stack.h"
 
 #define NUM_TREES 10
-void processTree(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node);
+void process_tree(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node);
 void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node);
 
 int num_entries = 1;
 #define A(r, c) dataset[r * num_entries + c]
 
-void processTree(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node) { 
+void process_tree(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node) { 
     if (node == NULL) {
         return; 
     }
     // then recur on right subtree 
-    processTree(dataset, tree_id, stack, node->right);
+    process_tree(dataset, tree_id, stack, node->right);
     // first recur on left subtree 
-    processTree(dataset, tree_id, stack, node->left);       
+    process_tree(dataset, tree_id, stack, node->left);       
     // now deal with the node 
     process_tree_aux(dataset, tree_id, stack, node);
 }
@@ -65,34 +65,37 @@ void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack,
 
 int main(int argc, char *argv[]) {
     double dataset [2] = {2 ,4};
-    //struct node_t *trees[NUM_TREES];
+    struct node_t *trees[NUM_TREES];
     float total_size = 0;
-    /*
     for(int i = 0; i < NUM_TREES; i++) {
         trees[i] = generate_tree();
         //printf("tree %d size: %d |", i, tree_size(trees[i]));
         total_size += tree_size(trees[i]);
     }
 
+    struct stack_t* stack = create_stack();
     for(int i = 0; i < NUM_TREES; i++){
-        struct stack_t* stack = create_stack();
         process_tree(dataset,i,stack,trees[i]);
         double res = pop(stack);
+        printf("Result %f\n",res);
+        clean_stack(stack);
     }
+    destroy_stack(stack);
 
     float average = (float)(total_size/NUM_TREES);
     printf("average size is %lf", average);
     for(int i = 0; i < NUM_TREES; i++) {
         node_destroy(trees[i]);
-    }*/
-    
+    }
+    /*
     struct stack_t* stack = create_stack();
     struct node_t *root = create_node(CT_OPERATOR, OP_TIMES);
     root->left = create_node(CT_LITERAL, 1);
     root->right = create_node(CT_OPERATOR, OP_PLUS);
     root->right->left = create_node(CT_LITERAL, 3);
     root->right->right = create_node(CT_LITERAL, 5);
-    free_stack(stack);
+    node_destroy(root);
+    destroy_stack(stack);*/
     /* 4 becomes left child of 2 
            - 
          /   \ 

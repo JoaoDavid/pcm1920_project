@@ -14,7 +14,7 @@ all: run
 run: $(OBJ_dir)/run.o $(OBJ_dir)/node.o $(OBJ_dir)/stack.o $(OBJ_dir)/tree_generator.o
 	$(CC) -o $(BIN_dir)/run $(OBJ_dir)/run.o $(OBJ_dir)/node.o $(OBJ_dir)/stack.o $(OBJ_dir)/tree_generator.o
 
-run.o: $(SRC_dir)/run.c
+run.o: $(SRC_dir)/run.c 
 	$(CC) -c $(SRC_dir)/run.c -o $(OBJ_dir)/run.o
 
 node.o: $(SRC_dir)/node.c

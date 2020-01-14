@@ -27,4 +27,6 @@ void toStringAux(struct stack_node_t* node_stack);
 
 void destroy_stack(struct stack_t* stack);
 
+void clean_stack(struct stack_t* stack);
+
 #endif
