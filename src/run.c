@@ -78,7 +78,7 @@ void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack,
 
 int main(int argc, char *argv[]) {
     double dataset [2] = {2 ,4};
-    struct node_t *trees[NUM_TREES];
+    //struct node_t *trees[NUM_TREES];
     float total_size = 0;
     /*
     for(int i = 0; i < NUM_TREES; i++) {

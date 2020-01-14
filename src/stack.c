@@ -62,11 +62,12 @@ void toStringAux(struct stack_node_t* node_stack) {
     }
 }
 
-void free_stack(struct stack_t* stack){
+void destroy_stack(struct stack_t* stack){
     struct stack_node_t* node = stack->head;
     while(node != NULL){
         struct stack_node_t* temp = node->next;
         free(node);
         node = temp;
     }
+    free(stack);
 }
