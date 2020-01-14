@@ -27,7 +27,7 @@ struct node_t* generate_tree_aux(int curr_depth) {
     //switch(CT_OPERATOR){
     switch(nodes[get_random(0,2)]){
         case CT_LITERAL:{
-            return create_node(CT_LITERAL, get_random(-LITERAL_LOWER_BOUND,LITERAL_UPPER_BOUND));
+            return create_node(CT_LITERAL, get_random(LITERAL_LOWER_BOUND,LITERAL_UPPER_BOUND));
             //break;
         }
         case CT_DATASET_VAR:{
@@ -47,8 +47,8 @@ struct node_t* generate_tree_aux(int curr_depth) {
     return NULL;
 }
 
-int size(struct node_t* node) {   
-  return node==NULL ? 0 : (size(node->left) + 1 + size(node->right));   
+int tree_size(struct node_t* node) {   
+  return node==NULL ? 0 : (tree_size(node->left) + 1 + tree_size(node->right));   
 } 
 
 /*
@@ -57,6 +57,22 @@ int size(struct node_t* node) {
 int get_random(int lower, int upper) {
     return (rand() % (upper - lower + 1)) + lower;
 }
+
+void printPostorder(struct node_t* node) 
+{ 
+    if (node == NULL) {
+        return; 
+    }        
+  
+    // first recur on left subtree 
+    printPostorder(node->left); 
+  
+    // then recur on right subtree 
+    printPostorder(node->right); 
+  
+    // now deal with the node 
+    
+} 
 
 /*int main() {
     srand(time(0));

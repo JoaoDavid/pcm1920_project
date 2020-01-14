@@ -4,6 +4,6 @@
 int get_random(int lower, int upper);
 struct node_t* generate_tree();
 struct node_t* generate_tree_aux(int curr_depth);
-
+int tree_size(struct node_t* node);
 
 #endif
