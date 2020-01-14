@@ -1,5 +1,5 @@
 CC = gcc
-LB = lb
+CFLAGS = -I.
 
 BIN_dir = binary
 OBJ_dir = object
@@ -7,38 +7,27 @@ LIB_dir = lib
 SRC_dir = src
 INCLUDE_dir = include
 
-CFLAGS = -Wall -g -I 
-
 #-----------------------
 
-#Header Files
-node.o = node.h
+all: run
 
+run: $(OBJ_dir)/run.o $(OBJ_dir)/node.o $(OBJ_dir)/stack.o
+	$(CC) -o $(BIN_dir)/run $(OBJ_dir)/run.o $(OBJ_dir)/node.o $(OBJ_dir)/stack.o
 
-all: client-lib.o table-client table-server
+run.o: $(SRC_dir)/run.c
+	$(CC) -c $(SRC_dir)/run.c -o $(OBJ_dir)/run.o
 
-table-client : $(OBJECTS_table_client)
-	$(CC) -pthread $(LIB_dir)/client-lib.o  $(OBJ_dir)/table-client.o -o $(BIN_dir)/$@
-	
-table-server : $(OBJECTS_table_server) 
-	$(CC) -pthread $(addprefix $(OBJ_dir)/,$^) -o $(BIN_dir)/$@
+node.o: $(SRC_dir)/node.c
+	$(CC) -c $(SRC_dir)/node.c -o $(OBJ_dir)/node.o
 
-	
-client-lib.o: $(C_client_lib)
-	$(LD) -r $(addprefix $(OBJ_dir)/,$^) -o $(LIB_dir)/$@
-
-%.o: $(SRC_dir)/%.c $($@)
-	$(CC) $(CFLAGS) $(INCLUDE_dir) -o $(OBJ_dir)/$@ -c $<
+stack.o: $(SRC_dir)/stack.c
+	$(CC) -c $(SRC_dir)/stack.c -o $(OBJ_dir)/stack.o
 	
 clean:
 	rm -f $(OBJ_dir)/*
 	rm -f $(BIN_dir)/*
 	rm -f $(LIB_dir)/*
 
-runTestValgrindTableClient:
-	valgrind --leak-check=full $(BIN_dir)/table-client
-
-runTestValgrindTableServer:
-	valgrind --leak-check=full $(BIN_dir)/table-server
-
+valgrindRun:
+	valgrind --leak-check=full $(BIN_dir)/run
 
