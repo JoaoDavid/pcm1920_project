@@ -5,7 +5,7 @@
 #include "../include/node.h"
 #include "../include/stack.h"
 
-#define NUM_TREES 1000
+#define NUM_TREES 10
 void processTree(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node);
 void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node);
 
@@ -78,25 +78,34 @@ void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack,
 
 int main(int argc, char *argv[]) {
     double dataset [2] = {2 ,4};
-    /*struct node_t *trees[NUM_TREES];
+    struct node_t *trees[NUM_TREES];
     float total_size = 0;
+    /*
     for(int i = 0; i < NUM_TREES; i++) {
         trees[i] = generate_tree();
         //printf("tree %d size: %d |", i, tree_size(trees[i]));
         total_size += tree_size(trees[i]);
     }
+
+    for(int i = 0; i < NUM_TREES; i++){
+        struct stack_t* stack = create_stack();
+        process_tree(dataset,i,stack,trees[i]);
+        double res = pop(stack);
+    }
+
     float average = (float)(total_size/NUM_TREES);
     printf("average size is %lf", average);
     for(int i = 0; i < NUM_TREES; i++) {
         node_destroy(trees[i]);
     }*/
-
+    
     struct stack_t* stack = create_stack();
     struct node_t *root = create_node(CT_OPERATOR, OP_PLUS);
     root->left = create_node(CT_LITERAL, 2);
     root->right = create_node(CT_OPERATOR, OP_PLUS);
     root->right->left = create_node(CT_LITERAL, 3);
     root->right->right = create_node(CT_LITERAL, 5);
+    free_stack(stack);
     /* 4 becomes left child of 2 
            + 
          /   \ 
@@ -104,10 +113,11 @@ int main(int argc, char *argv[]) {
      /    \    /  \ 
     NULL NULL  3   5
     */
+   /*
     processTree(dataset, 0, stack, root);
     double res = pop(stack);
     printf("resultado %f ", res);
-    node_destroy(root);
+    node_destroy(root);*/
     /*struct stack_t* stack = create_stack();
     push(stack, 3.9);
     push(stack, 1.4);
