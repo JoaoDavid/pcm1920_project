@@ -15,27 +15,19 @@ int num_entries = 1;
 void processTree(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node) { 
     if (node == NULL) {
         return; 
-    }        
-  
-    // first recur on left subtree 
-    processTree(dataset, tree_id, stack, node->left); 
-  
+    }
     // then recur on right subtree 
-    processTree(dataset, tree_id, stack, node->right); 
-  
+    processTree(dataset, tree_id, stack, node->right);
+    // first recur on left subtree 
+    processTree(dataset, tree_id, stack, node->left);       
     // now deal with the node 
     process_tree_aux(dataset, tree_id, stack, node);
 }
 
 void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node) {
-    //toString(stack);
     switch(node->c_type){
         case CT_LITERAL:{
-            printf("double is %d\n",node->content.literal );
-            toString(stack);
             push(stack, (double)node->content.literal);
-            toString(stack);
-            printf("peek %f\n",peek(stack));
             break;
         }
         case CT_DATASET_VAR:{
@@ -46,17 +38,12 @@ void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack,
         case CT_OPERATOR:{
             switch(node->content.operator_code){
                 case OP_TIMES:{
-                    double result = pop(stack) * pop(stack);
-                    
+                    double result = pop(stack) * pop(stack);                    
                     push(stack, result);
                     break;
                 }
                 case OP_PLUS:{
-                    double first = pop(stack);
-                    double second = pop(stack);
-                    double result = first + second;
-                    //double result = pop(stack) + pop(stack);
-                    printf("%f + %f = %f\n", first, second, result);
+                    double result = pop(stack) + pop(stack);
                     push(stack, result);
                     break;
                 }
@@ -92,15 +79,15 @@ int main(int argc, char *argv[]) {
     }*/
 
     struct stack_t* stack = create_stack();
-    struct node_t *root = create_node(CT_OPERATOR, OP_PLUS);
-    root->left = create_node(CT_LITERAL, 2);
+    struct node_t *root = create_node(CT_OPERATOR, OP_TIMES);
+    root->left = create_node(CT_LITERAL, 1);
     root->right = create_node(CT_OPERATOR, OP_PLUS);
     root->right->left = create_node(CT_LITERAL, 3);
     root->right->right = create_node(CT_LITERAL, 5);
     /* 4 becomes left child of 2 
-           + 
+           - 
          /   \ 
-        2      + 
+        10      + 
      /    \    /  \ 
     NULL NULL  3   5
     */
