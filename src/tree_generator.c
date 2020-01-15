@@ -55,10 +55,10 @@ int get_random(int lower, int upper) {
     return (rand() % (upper - lower + 1)) + lower;
 }
 
-void print_tree(struct node_t* node) {   
+void print_tree_rpn(struct node_t* node) {   
     if (node != NULL) {
-        print_tree(node->left);
-        print_tree(node->right);
+        print_tree_rpn(node->left);
+        print_tree_rpn(node->right);
         switch(node->c_type){
             case CT_LITERAL:{
                 printf("%d ",node->content.literal);

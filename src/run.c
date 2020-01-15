@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     double function_res[NUM_TREES][num_rows];
     for(int i = 0; i < NUM_TREES; i++) {
         trees[i] = generate_tree(num_columns);
-        print_tree(trees[i]); printf("\n");
+        print_tree_rpn(trees[i]); printf("\n");
         total_size += tree_size(trees[i]);
         for(int j = 0; j < num_rows; j++){
             process_tree(dataset,j,stack,trees[i]);
@@ -100,27 +100,23 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < NUM_TREES; i++) {
         node_destroy(trees[i]);
     }
-    /*
-    struct stack_t* stack = create_stack();
+
+
+    /*struct stack_t* stack = create_stack();
     struct node_t *root = create_node(CT_OPERATOR, OP_TIMES);
     root->left = create_node(CT_LITERAL, 1);
-    root->right = create_node(CT_OPERATOR, OP_PLUS);
+    root->right = create_node(CT_OPERATOR, OP_DIVIDE);
     root->right->left = create_node(CT_LITERAL, 3);
-    root->right->right = create_node(CT_LITERAL, 5);
-    node_destroy(root);
-    destroy_stack(stack);*/
-    /* 4 becomes left child of 2 
-           - 
-         /   \ 
-        10      + 
-     /    \    /  \ 
-    NULL NULL  3   5
-    */
-   /*
-    processTree(dataset, 0, stack, root);
+    root->right->right = create_node(CT_LITERAL, 0);
+
+
+
+    process_tree(dataset, 0, stack, root);
     double res = pop(stack);
     printf("resultado %f ", res);
     node_destroy(root);*/
+
+
     /*struct stack_t* stack = create_stack();
     push(stack, 3.9);
     push(stack, 1.4);
