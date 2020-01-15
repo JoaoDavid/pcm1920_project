@@ -6,53 +6,61 @@
 #include "../include/stack.h"
 
 #define NUM_TREES 10
-void process_tree(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node);
-void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node);
+void process_tree(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node);
+void process_tree_aux(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node);
 
 int num_entries = 1;
 #define A(r, c) dataset[r * num_entries + c]
 
-void process_tree(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node) { 
+void process_tree(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node) { 
     if (node == NULL) {
         return; 
     }
     // then recur on right subtree 
-    process_tree(dataset, tree_id, stack, node->right);
+    process_tree(dataset, row_index, stack, node->right);
     // first recur on left subtree 
-    process_tree(dataset, tree_id, stack, node->left);       
+    process_tree(dataset, row_index, stack, node->left);       
     // now deal with the node 
-    process_tree_aux(dataset, tree_id, stack, node);
+    process_tree_aux(dataset, row_index, stack, node);
 }
 
-void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack, struct node_t* node) {
+void process_tree_aux(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node) {
     switch(node->c_type){
         case CT_LITERAL:{
+            //printf("%d ",node->content.literal);
             push(stack, (double)node->content.literal);
             break;
         }
         case CT_DATASET_VAR:{
-            //push(stack, dataset[tree_id][node->content.index_in_dataset]);
-            push(stack, A(tree_id, node->content.index_in_dataset));            
+            //push(stack, dataset[row_index][node->content.index_in_dataset]);
+            double value = A(row_index, node->content.index_in_dataset);
+            //printf("value in dataset %f\n", value);
+            //printf("%f ",value); 
+            push(stack, value);            
             break;
         }
         case CT_OPERATOR:{
             switch(node->content.operator_code){
                 case OP_TIMES:{
+                    //printf("* ");
                     double result = pop(stack) * pop(stack);                    
                     push(stack, result);
                     break;
                 }
                 case OP_PLUS:{
+                    //printf("+ ");
                     double result = pop(stack) + pop(stack);
                     push(stack, result);
                     break;
                 }
                 case OP_MINUS:{
+                    //printf("- ");
                     double result = pop(stack) - pop(stack);
                     push(stack, result);
                     break;
                 }
                 case OP_DIVIDE:{
+                    //printf("/ ");
                     double result = pop(stack) / pop(stack);
                     push(stack, result);
                     break;
@@ -66,20 +74,25 @@ void process_tree_aux(const double *dataset, int tree_id, struct stack_t* stack,
 int main(int argc, char *argv[]) {
     double dataset [2] = {2 ,4};
     struct node_t *trees[NUM_TREES];
-    float total_size = 0;
+    struct stack_t* stack = create_stack();
+    float total_size = 0;    
+    int num_columns = 1; //x0,x1,x2,x3,...,xn and y
+    int num_rows = 1;
+    double function_res[NUM_TREES][num_rows];
     for(int i = 0; i < NUM_TREES; i++) {
-        trees[i] = generate_tree();
-        //printf("tree %d size: %d |", i, tree_size(trees[i]));
+        trees[i] = generate_tree(num_columns);
+        print_tree(trees[i]); printf("\n");
         total_size += tree_size(trees[i]);
+        for(int j = 0; j < num_rows; j++){
+            process_tree(dataset,j,stack,trees[i]);
+            function_res[i][j] = pop(stack);
+            printf("Result %f\n", function_res[i][j]);
+            clean_stack(stack);
+        }
     }
 
-    struct stack_t* stack = create_stack();
-    for(int i = 0; i < NUM_TREES; i++){
-        process_tree(dataset,i,stack,trees[i]);
-        double res = pop(stack);
-        printf("Result %f\n",res);
-        clean_stack(stack);
-    }
+    
+    
     destroy_stack(stack);
 
     float average = (float)(total_size/NUM_TREES);
