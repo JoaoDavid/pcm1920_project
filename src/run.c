@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "../include/tree_generator.h"
 #include "../include/node.h"
@@ -91,10 +92,54 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    
-    
-    destroy_stack(stack);
+    num_columns = 0;
+    num_rows = 0;
+    char c;
+    FILE* file = fopen(argv[1],"r");
+    for (c = getc(file); c != EOF; c = getc(file)){
+        if (c == '\n') // Increment count if this character is newline 
+            num_rows++; 
+    }
+    int bufferLength = 15000;
+    char line[bufferLength];
+    fseek(file, 0, SEEK_SET);
+    fgets(line,bufferLength, file);
+    char *p = strtok (line, "  ");
+    while(p != NULL){
+        p = strtok(NULL,"  ");
+        num_columns++;
+    }
 
+    printf("Number of lines: %d\n",num_rows);
+    printf("Number of columns: %d\n",num_columns);
+    fseek(file, 0, SEEK_SET);
+    int row = 0, column = 0;
+    double* dataset2 = malloc((num_columns-1)*num_rows*sizeof(double));
+    double* target_values = malloc(num_rows*sizeof(double));
+    while (fgets(line, bufferLength, file) != NULL) {
+        p = strtok (line, "  ");
+        while(p != NULL){
+            if(column == num_columns){
+                target_values[row] = strtod(p, NULL);
+                p = p = strtok(NULL,"  ");
+                column++;
+            }else{
+                dataset2[row * (num_columns-1) + column] = strtod(p, NULL); //breaks here
+                p = strtok(NULL,"  ");
+                column++;
+            }
+        }
+        column = 0;
+        row++;
+    }
+
+    printf("TEST %f\n", dataset2[0*626 + 626]);
+
+    fclose(file);
+    free(dataset2);
+    free(target_values);
+    destroy_stack(stack);
+    //free(dataset2);
     float average = (float)(total_size/NUM_TREES);
     printf("average size is %lf", average);
     for(int i = 0; i < NUM_TREES; i++) {
