@@ -62,8 +62,13 @@ void process_tree_aux(const double *dataset, int row_index, struct stack_t* stac
                 }
                 case OP_DIVIDE:{
                     //printf("/ ");
-                    double result = pop(stack) / pop(stack);
-                    push(stack, result);
+                    double dividend = pop(stack);
+                    double divisor = pop(stack);
+                    if (divisor == 0) {
+                        push(stack, 0);
+                    } else {
+                        push(stack, dividend/divisor);
+                    }                    
                     break;
                 }
             }
@@ -148,7 +153,7 @@ int main(int argc, char *argv[]) {
 
 
     /*struct stack_t* stack = create_stack();
-    struct node_t *root = create_node(CT_OPERATOR, OP_TIMES);
+    struct node_t *root = create_node(CT_OPERATOR, OP_PLUS);
     root->left = create_node(CT_LITERAL, 1);
     root->right = create_node(CT_OPERATOR, OP_DIVIDE);
     root->right->left = create_node(CT_LITERAL, 3);
