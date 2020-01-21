@@ -11,8 +11,8 @@
 void process_tree(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node);
 void process_tree_aux(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node);
 
-int num_entries = 1;
-#define A(r, c) dataset[r * num_entries + c]
+int num_vars = 1;
+#define A(r, c) dataset[r * num_vars + c]
 
 void process_tree(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node) { 
     if (node == NULL) {
@@ -78,67 +78,52 @@ void process_tree_aux(const double *dataset, int row_index, struct stack_t* stac
     }
 }
 
+
 int main(int argc, char *argv[]) {
-    double dataset [2] = {2 ,4};
+    //Parsing dataset file, and adding its values to the dataset array
+    int num_columns = parse_file_columns(argv[1]); //x0,x1,x2,x3,...,xn and y
+    int num_rows = parse_file_rows(argv[1]);
+    int num_vars = num_columns - 1; //excluding y
+    double* dataset = malloc((num_columns-1)*num_rows*sizeof(double));
+    double* target_values = malloc(num_rows*sizeof(double));
+    parse_file_data(argv[1],dataset,target_values,num_columns,num_rows);
+    printf("Number of rows: %d\n",num_rows);
+    printf("Number of columns: %d\n",num_columns);    
+
     struct node_t *trees[NUM_TREES];
     struct stack_t* stack = create_stack();
     float total_size = 0;    
-    int num_columns = 1; //x0,x1,x2,x3,...,xn and y
-    int num_rows = 1;
+
     double function_res[NUM_TREES][num_rows];
     for(int i = 0; i < NUM_TREES; i++) {
-        trees[i] = generate_tree(num_columns);
+        trees[i] = generate_tree(num_vars);
         print_tree_rpn(trees[i]); printf("\n");
         total_size += tree_size(trees[i]);
         for(int j = 0; j < num_rows; j++){
             process_tree(dataset,j,stack,trees[i]);
             function_res[i][j] = pop(stack);
-            printf("Result %f\n", function_res[i][j]);
+            printf("Result (tree:%d|row:%d) %f\n", i, j, function_res[i][j]);
             clean_stack(stack);
         }
     }
 
-    num_columns = parse_file_columns(argv[1]);
-    num_rows = parse_file_rows(argv[1]);
+    //Prints dataset content
+    printf("---------- PRINTING DATASET CONTENT ----------\n");
+    for(int i = 0; i < num_rows; i++) {
+        for(int j = 0; j < num_vars; j++){
+            printf("%f ", A(i,j));
+        }
+        printf("%f \n", target_values[i]);
+    }
 
-    printf("Number of lines: %d\n",num_rows);
-    printf("Number of columns: %d\n",num_columns);
-
-    double* dataset2 = malloc((num_columns-1)*num_rows*sizeof(double));
-    double* target_values = malloc(num_rows*sizeof(double));
-    parse_file_data(argv[1],dataset2,target_values,num_columns,num_rows);
-
-    printf("TARGET VALS: %f %f\n",target_values[0],target_values[1]);
-    free(dataset2);
+    free(dataset);
     free(target_values);
     destroy_stack(stack);
+    
     float average = (float)(total_size/NUM_TREES);
-    printf("average size is %lf\n", average);
+    printf("average tree size is %lf\n", average);
     for(int i = 0; i < NUM_TREES; i++) {
         node_destroy(trees[i]);
     }
-
-    /*struct stack_t* stack = create_stack();
-    struct node_t *root = create_node(CT_OPERATOR, OP_PLUS);
-    root->left = create_node(CT_LITERAL, 1);
-    root->right = create_node(CT_OPERATOR, OP_DIVIDE);
-    root->right->left = create_node(CT_LITERAL, 3);
-    root->right->right = create_node(CT_LITERAL, 0);
-
-
-
-    process_tree(dataset, 0, stack, root);
-    double res = pop(stack);
-    printf("resultado %f ", res);
-    node_destroy(root);*/
-
-
-    /*struct stack_t* stack = create_stack();
-    push(stack, 3.9);
-    push(stack, 1.4);
-    push(stack, 2);
-    push(stack, -10);
-    toString(stack);
-    printf("\n%lf", pop(stack));printf("\n%lf", pop(stack));printf("\n%lf", pop(stack));printf("\n%lf", pop(stack));*/
 
 }
