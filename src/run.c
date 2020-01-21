@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     FILE* file = fopen(argv[1],"r");
     for (c = getc(file); c != EOF; c = getc(file)){
         if (c == '\n') // Increment count if this character is newline 
-            num_rows++; 
+            num_rows++;
     }
     int bufferLength = 15000;
     char line[bufferLength];
@@ -117,19 +117,20 @@ int main(int argc, char *argv[]) {
 
     printf("Number of lines: %d\n",num_rows);
     printf("Number of columns: %d\n",num_columns);
-    fseek(file, 0, SEEK_SET);
-    int row = 0, column = 0;
+
+    fseek(file, 0, SEEK_SET);    
+    int row = 0, column = 0, test = 0;
     double* dataset2 = malloc((num_columns-1)*num_rows*sizeof(double));
     double* target_values = malloc(num_rows*sizeof(double));
     while (fgets(line, bufferLength, file) != NULL) {
         p = strtok (line, "  ");
         while(p != NULL){
-            if(column == num_columns){
+            if(column == num_columns-1){
                 target_values[row] = strtod(p, NULL);
-                p = p = strtok(NULL,"  ");
+                p = strtok(NULL,"  ");
                 column++;
             }else{
-                dataset2[row * (num_columns-1) + column] = strtod(p, NULL); //breaks here
+                dataset2[row * (num_columns-1) + column] = strtod(p, NULL);
                 p = strtok(NULL,"  ");
                 column++;
             }
@@ -138,13 +139,11 @@ int main(int argc, char *argv[]) {
         row++;
     }
 
-    printf("TEST %f\n", dataset2[0*626 + 626]);
-
+    printf("TARGET VALS: %f %f\n",target_values[0],target_values[1]);
     fclose(file);
     free(dataset2);
     free(target_values);
     destroy_stack(stack);
-    //free(dataset2);
     float average = (float)(total_size/NUM_TREES);
     printf("average size is %lf", average);
     for(int i = 0; i < NUM_TREES; i++) {
