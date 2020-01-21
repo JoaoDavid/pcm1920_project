@@ -8,25 +8,26 @@
 #include "../include/dataset_parser.h"
 
 #define NUM_TREES 10
-void process_tree(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node);
-void process_tree_aux(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node);
+void process_tree(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
+void process_tree_aux(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 
-int num_vars = 1;
-#define A(r, c) dataset[r * num_vars + c]
 
-void process_tree(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node) { 
+#define DATASET(row, column) dataset[row * num_vars + column]
+#define FUNCTION_RESULT(tree, row) function_res[tree * num_rows + row]
+
+void process_tree(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node) { 
     if (node == NULL) {
         return; 
     }
     // then recur on right subtree 
-    process_tree(dataset, row_index, stack, node->right);
+    process_tree(dataset, num_vars, row_index, stack, node->right);
     // first recur on left subtree 
-    process_tree(dataset, row_index, stack, node->left);       
+    process_tree(dataset, num_vars, row_index, stack, node->left);       
     // now deal with the node 
-    process_tree_aux(dataset, row_index, stack, node);
+    process_tree_aux(dataset, num_vars, row_index, stack, node);
 }
 
-void process_tree_aux(const double *dataset, int row_index, struct stack_t* stack, struct node_t* node) {
+void process_tree_aux(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node) {
     switch(node->c_type){
         case CT_LITERAL:{
             //printf("%d ",node->content.literal);
@@ -35,7 +36,7 @@ void process_tree_aux(const double *dataset, int row_index, struct stack_t* stac
         }
         case CT_DATASET_VAR:{
             //push(stack, dataset[row_index][node->content.index_in_dataset]);
-            double value = A(row_index, node->content.index_in_dataset);
+            double value = DATASET(row_index, node->content.index_in_dataset);
             //printf("value in dataset %f\n", value);
             //printf("%f ",value); 
             push(stack, value);            
@@ -94,15 +95,28 @@ int main(int argc, char *argv[]) {
     struct stack_t* stack = create_stack();
     float total_size = 0;    
 
-    double function_res[NUM_TREES][num_rows];
+    /*double* function_res = malloc(NUM_TREES*num_rows*sizeof(double));
     for(int i = 0; i < NUM_TREES; i++) {
         trees[i] = generate_tree(num_vars);
         print_tree_rpn(trees[i]); printf("\n");
         total_size += tree_size(trees[i]);
         for(int j = 0; j < num_rows; j++){
-            process_tree(dataset,j,stack,trees[i]);
-            function_res[i][j] = pop(stack);
-            printf("Result (tree:%d|row:%d) %f\n", i, j, function_res[i][j]);
+            process_tree(dataset,num_vars, j,stack,trees[i]);
+            FUNCTION_RESULT(i,j) = pop(stack);
+            printf("Result (tree:%d|row:%d) %f\n", i, j, FUNCTION_RESULT(i,j));
+            clean_stack(stack);
+        }
+    }*/
+
+    double* function_res = malloc(NUM_TREES*num_rows*sizeof(double));
+    for(int i = 0; i < NUM_TREES; i++) {
+        trees[i] = generate_tree(num_vars);
+        print_tree_rpn(trees[i]); printf("\n");
+        total_size += tree_size(trees[i]);
+        for(int j = 0; j < num_rows; j++){
+            process_tree(dataset,num_vars,j,stack,trees[i]);
+            FUNCTION_RESULT(i,j) = pop(stack);
+            printf("Result (tree:%d|row:%d) %f\n", i, j, FUNCTION_RESULT(i,j));
             clean_stack(stack);
         }
     }
@@ -111,7 +125,7 @@ int main(int argc, char *argv[]) {
     printf("---------- PRINTING DATASET CONTENT ----------\n");
     for(int i = 0; i < num_rows; i++) {
         for(int j = 0; j < num_vars; j++){
-            printf("%f ", A(i,j));
+            printf("%f ", DATASET(i,j));
         }
         printf("%f \n", target_values[i]);
     }
