@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include<time.h> 
 
 #include "../include/tree_generator.h"
@@ -55,34 +56,44 @@ int get_random(int lower, int upper) {
     return (rand() % (upper - lower + 1)) + lower;
 }
 
-void print_tree_rpn(struct node_t* node) {   
+void print_tree_rpn(struct node_t* node, char* result) {
     if (node != NULL) {
-        print_tree_rpn(node->left);
-        print_tree_rpn(node->right);
+        print_tree_rpn(node->left, result);
+        print_tree_rpn(node->right, result);
         switch(node->c_type){
             case CT_LITERAL:{
+                char buf[5];
+                sprintf(buf, "%d ",node->content.literal);
+                strcat(result,buf);
                 printf("%d ",node->content.literal);
                 break;
             }
             case CT_DATASET_VAR:{
+                char buf[5];
+                sprintf(buf, "x%d ",node->content.index_in_dataset);
+                strcat(result,buf);
                 printf("x%d ",node->content.index_in_dataset);          
                 break;
             }
             case CT_OPERATOR:{
                 switch(node->content.operator_code){
                     case OP_TIMES:{
+                        strcat(result,"* ");
                         printf("* "); 
                         break;
                     }
                     case OP_PLUS:{
+                        strcat(result,"+ ");
                         printf("+ "); 
                         break;
                     }
                     case OP_MINUS:{
+                        strcat(result,"- ");
                         printf("- "); 
                         break;
                     }
                     case OP_DIVIDE:{
+                        strcat(result,"/ ");
                         printf("/ "); 
                         break;
                     }
