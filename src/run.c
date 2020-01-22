@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+//#include <cuda.h>
 
 #include "../include/tree_generator.h"
 #include "../include/node.h"
@@ -8,12 +9,13 @@
 #include "../include/dataset_parser.h"
 
 #define NUM_TREES 10
+#define NUM_GENERATIONS 3
 void process_tree(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 void process_tree_aux(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 
 
 #define DATASET(row, column) dataset[row * num_vars + column]
-#define FUNCTION_RESULT(tree, row) function_res[tree * num_rows + row]
+#define populationULT(tree, row) population[tree * num_rows + row]
 
 void process_tree(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node) { 
     if (node == NULL) {
@@ -79,6 +81,20 @@ void process_tree_aux(const double *dataset, int num_vars, int row_index, struct
     }
 }
 
+void gpu_prearation(double* population, double* target_values, int alloc_size_pop) {
+    int *dev_population;
+    int *dev_new_population;
+    //cudaMalloc(&dev_population, alloc_size_pop);
+    //cudaMemcpy(dev_population, population, alloc_size_pop, cudaMemcpyHostToDevice);
+    //cudaMalloc(&dev_new_population, alloc_size_pop);
+    
+}
+//__global__ 
+void gpu_compute(int curr_iteration, int num_rows, int num_trees) {
+    
+
+}
+
 
 int main(int argc, char *argv[]) {
     //Parsing dataset file, and adding its values to the dataset array
@@ -93,30 +109,17 @@ int main(int argc, char *argv[]) {
 
     struct node_t *trees[NUM_TREES];
     struct stack_t* stack = create_stack();
-    float total_size = 0;    
+    float total_size = 0;
 
-    /*double* function_res = malloc(NUM_TREES*num_rows*sizeof(double));
-    for(int i = 0; i < NUM_TREES; i++) {
-        trees[i] = generate_tree(num_vars);
-        print_tree_rpn(trees[i]); printf("\n");
-        total_size += tree_size(trees[i]);
-        for(int j = 0; j < num_rows; j++){
-            process_tree(dataset,num_vars, j,stack,trees[i]);
-            FUNCTION_RESULT(i,j) = pop(stack);
-            printf("Result (tree:%d|row:%d) %f\n", i, j, FUNCTION_RESULT(i,j));
-            clean_stack(stack);
-        }
-    }*/
-
-    double* function_res = malloc(NUM_TREES*num_rows*sizeof(double));
+    double* population = malloc(NUM_TREES*num_rows*sizeof(double));
     for(int i = 0; i < NUM_TREES; i++) {
         trees[i] = generate_tree(num_vars);
         print_tree_rpn(trees[i]); printf("\n");
         total_size += tree_size(trees[i]);
         for(int j = 0; j < num_rows; j++){
             process_tree(dataset,num_vars,j,stack,trees[i]);
-            FUNCTION_RESULT(i,j) = pop(stack);
-            printf("Result (tree:%d|row:%d) %f\n", i, j, FUNCTION_RESULT(i,j));
+            populationULT(i,j) = pop(stack);
+            printf("Result (tree:%d|row:%d) %f\n", i, j, populationULT(i,j));
             clean_stack(stack);
         }
     }
@@ -132,6 +135,7 @@ int main(int argc, char *argv[]) {
 
     free(dataset);
     free(target_values);
+    free(population);
     destroy_stack(stack);
     
     float average = (float)(total_size/NUM_TREES);
