@@ -1,0 +1,11 @@
+\begin{thebibliography}{1}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\providecommand{\doi}[1]{https://doi.org/#1}
+
+\bibitem{DBLP:journals/heuristics/ChuB98}
+Chu, P.C., Beasley, J.E.: A genetic algorithm for the multidimensional knapsack
+  problem. J. Heuristics  \textbf{4}(1),  63--86 (1998).
+  \doi{10.1023/A:1009642405419}, \url{https://doi.org/10.1023/A:1009642405419}
+
+\end{thebibliography}
