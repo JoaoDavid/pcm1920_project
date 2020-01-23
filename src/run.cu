@@ -83,7 +83,42 @@ void process_tree_aux(const double *dataset, int num_vars, int row_index, struct
     }
 }
 
-__global__ void gpu_first_compute(double *dev_population, double *dev_target_values, int num_rows, double *dev_fitness, int *dev_fitness_index) {
+
+__global__ void gpu_generations(int generation, int *matrix_gen_individual, double *first_fitness, double *old_fitness, double *new_fitness) {
+    extern __shared__ double shared[];
+    if (generation == 0) {
+        shared[threadIdx.x] = first_fitness[threadIdx.x];
+    } else {
+        shared[threadIdx.x] = old_fitness[threadIdx.x];
+    }
+    __syncthreads();
+    if (generation % 2 == 0) {
+        int min_fitness_index = threadIdx.x % 2;
+        for(int i = threadIdx.x % 2; i < NUM_TREES; i += 2) {
+            min_fitness_index = (min_fitness_index < shared[i] ? min_fitness_index : i);
+        }
+        new_fitness[threadIdx.x] = min_fitness_index;
+    } else {
+        int boundary = NUM_TREES / 2;
+        if (threadIdx.x < boundary) {
+            int min_fitness_index = 0;
+            for(int i = 0; i < boundary; i++) {
+                min_fitness_index = (min_fitness_index < shared[i] ? min_fitness_index : i);
+            }
+            new_fitness[threadIdx.x] = min_fitness_index;
+        } else {
+            int min_fitness_index = boundary;
+            for(int i = boundary; i < NUM_TREES; i++) {
+                min_fitness_index = (min_fitness_index < shared[i] ? min_fitness_index : i);
+            }
+            new_fitness[threadIdx.x] = min_fitness_index;
+        }
+    }
+
+}
+
+
+__global__ void gpu_first_fitness(double *dev_population, double *dev_target_values, int num_rows, double *dev_fitness) {
     extern __shared__ double shared[];
     //populationULT(tree, row) population[tree * num_rows + row] 
     double res = pow(dev_population[blockIdx.x * num_rows + threadIdx.x] - dev_target_values[threadIdx.x], 2);
@@ -102,27 +137,21 @@ __global__ void gpu_first_compute(double *dev_population, double *dev_target_val
 
     if(threadIdx.x == 0) {
         dev_fitness[blockIdx.x] = shared[threadIdx.x] / num_rows;
-        dev_fitness_index[blockIdx.x] = blockIdx.x;
     }
 }
 
 void gpu_prearation(double *population, double *target_values, int target_values_size, int population_size, int num_rows) {
     double *dev_population;
-    double *dev_new_population;
     cudaMalloc(&dev_population, population_size);
     cudaMemcpy(dev_population, population, population_size, cudaMemcpyHostToDevice);
-    cudaMalloc(&dev_new_population, population_size);
-    int *res_tree_index = (int*) malloc((NUM_GENERATIONS+1)*sizeof(int));
 
     double *dev_target_values; //pointer to the location of the y's values in the gpu's memory
     cudaMalloc(&dev_target_values, target_values_size);
     cudaMemcpy(dev_target_values, target_values, target_values_size, cudaMemcpyHostToDevice);
+    
     double *fitness = (double*) malloc(NUM_TREES * sizeof(double));
     double *dev_fitness;
-    int *fitness_index = (int*) malloc(NUM_TREES * sizeof(int));
-    int *dev_fitness_index;
     cudaMalloc(&dev_fitness, NUM_TREES * sizeof(double));
-    cudaMalloc(&dev_fitness_index, NUM_TREES * sizeof(int));
 
 
     //Prints dataset content
@@ -134,10 +163,9 @@ void gpu_prearation(double *population, double *target_values, int target_values
         printf("\n");
     }
 
-    gpu_first_compute<<<NUM_TREES, num_rows, sizeof(double) * num_rows>>>(dev_population, dev_target_values, num_rows, dev_fitness, dev_fitness_index);
+    gpu_first_fitness<<<NUM_TREES, num_rows, sizeof(double) * num_rows>>>(dev_population, dev_target_values, num_rows, dev_fitness);
     cudaMemcpy(population, dev_population, population_size, cudaMemcpyDeviceToHost);
     cudaMemcpy(fitness, dev_fitness, NUM_TREES*sizeof(double), cudaMemcpyDeviceToHost);
-    cudaMemcpy(fitness_index, dev_fitness_index, NUM_TREES*sizeof(int), cudaMemcpyDeviceToHost);
 
     //Prints dataset content
     printf("---------- after PRINTING population CONTENT ----------\n");
@@ -152,11 +180,6 @@ void gpu_prearation(double *population, double *target_values, int target_values
     printf("---------- PRINTING fitness ----------\n");
     for(int i = 0; i < NUM_TREES; i++) {
         printf("%f , ", fitness[i]);
-    }
-    printf("\n");
-    printf("---------- PRINTING fitness index ----------\n");
-    for(int i = 0; i < NUM_TREES; i++) {
-        printf("%d , ", fitness_index[i]);
     }
     printf("\n");
 
