@@ -3,10 +3,12 @@
 #include <string.h>
 //#include <cuda.h>
 
-#include "../include/tree_generator.h"
-#include "../include/node.h"
-#include "../include/stack.h"
-#include "../include/dataset_parser.h"
+extern "C" { 
+    #include "../include/tree_generator.h"
+    #include "../include/node.h"
+    #include "../include/stack.h"
+    #include "../include/dataset_parser.h"
+}
 
 #define NUM_TREES 10
 #define NUM_GENERATIONS 3
@@ -81,19 +83,62 @@ void process_tree_aux(const double *dataset, int num_vars, int row_index, struct
     }
 }
 
-void gpu_prearation(double* population, double* target_values, int alloc_size_pop) {
-    int *dev_population;
-    int *dev_new_population;
-    //cudaMalloc(&dev_population, alloc_size_pop);
-    //cudaMemcpy(dev_population, population, alloc_size_pop, cudaMemcpyHostToDevice);
-    //cudaMalloc(&dev_new_population, alloc_size_pop);
-    
+__global__ void gpu_first_compute(double *dev_population, double *dev_target_values, int num_rows) {
+    extern __shared__ double shared[];
+    //populationULT(tree, row) population[tree * num_rows + row] 
+    double res = pow(dev_population[blockIdx.x * num_rows + threadIdx.x] - dev_target_values[threadIdx.x], 2);
+    //shared[threadIdx.x] = pow(dev_population[blockIdx.x * num_rows + threadIdx.x] - dev_target_values[threadIdx.x], 2);
+    shared[threadIdx.x] = res;
+    dev_population[blockIdx.x * num_rows + threadIdx.x] = res;
 }
+
+void gpu_prearation(double *population, double *target_values, int target_values_size, int population_size, int num_rows) {
+    double *dev_population;
+    double *dev_new_population;
+    cudaMalloc(&dev_population, population_size);
+    cudaMemcpy(dev_population, population, population_size, cudaMemcpyHostToDevice);
+    cudaMalloc(&dev_new_population, population_size);
+    int *res_tree_index = (int*) malloc((NUM_GENERATIONS+1)*sizeof(int));
+
+    double *dev_target_values; //pointer to the location of the y's values in the gpu's memory
+    cudaMalloc(&dev_target_values, target_values_size);
+    cudaMemcpy(dev_target_values, target_values, target_values_size, cudaMemcpyHostToDevice);
+    int *dev_fitness;
+    int *dev_fitness_index;
+    cudaMalloc(&dev_fitness, NUM_TREES);
+    cudaMalloc(&dev_fitness_index, NUM_TREES);
+
+
+    //Prints dataset content
+    printf("---------- before PRINTING population CONTENT ----------\n");
+    for(int i = 0; i < NUM_TREES; i++) {
+        for(int j = 0; j < num_rows; j++){
+            printf("%f ", populationULT(i,j));
+        }
+        printf("\n");
+    }
+
+    gpu_first_compute<<<NUM_TREES, num_rows, sizeof(double) * num_rows>>>(dev_population, dev_target_values, num_rows);
+    cudaMemcpy(population, dev_population, population_size, cudaMemcpyDeviceToHost);
+
+    //Prints dataset content
+    printf("---------- after PRINTING population CONTENT ----------\n");
+    for(int i = 0; i < NUM_TREES; i++) {
+        for(int j = 0; j < num_rows; j++){
+            printf("%f ", populationULT(i,j));
+        }
+        printf("\n");
+    }
+    //populationULT(tree, row) population[tree * num_rows + row]
+}
+
+
+
 //__global__ 
-void gpu_compute(int curr_iteration, int num_rows, int num_trees) {
+/*void gpu_compute(int curr_iteration, int num_rows, int num_trees) {
     
 
-}
+}*/
 
 
 int main(int argc, char *argv[]) {
@@ -101,8 +146,9 @@ int main(int argc, char *argv[]) {
     int num_columns = parse_file_columns(argv[1]); //x0,x1,x2,x3,...,xn and y
     int num_rows = parse_file_rows(argv[1]);
     int num_vars = num_columns - 1; //excluding y
-    double* dataset = malloc((num_columns-1)*num_rows*sizeof(double));
-    double* target_values = malloc(num_rows*sizeof(double));
+    double* dataset = (double*) malloc((num_columns-1)*num_rows*sizeof(double));
+    int target_values_size = num_rows*sizeof(double);
+    double* target_values = (double*) malloc(target_values_size);
     parse_file_data(argv[1],dataset,target_values,num_columns,num_rows);
     printf("Number of rows: %d\n",num_rows);
     printf("Number of columns: %d\n",num_columns);    
@@ -110,8 +156,8 @@ int main(int argc, char *argv[]) {
     struct node_t *trees[NUM_TREES];
     struct stack_t* stack = create_stack();
     float total_size = 0;
-
-    double* population = malloc(NUM_TREES*num_rows*sizeof(double));
+    int population_size = NUM_TREES*num_rows*sizeof(double);
+    double* population = (double*) malloc(population_size);
     for(int i = 0; i < NUM_TREES; i++) {
         trees[i] = generate_tree(num_vars);
         print_tree_rpn(trees[i]); printf("\n");
@@ -132,6 +178,9 @@ int main(int argc, char *argv[]) {
         }
         printf("%f \n", target_values[i]);
     }
+
+    gpu_prearation(population, target_values, target_values_size, population_size, num_rows);
+
 
     free(dataset);
     free(target_values);
