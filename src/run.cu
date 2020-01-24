@@ -10,8 +10,8 @@ extern "C" {
     #include "../include/dataset_parser.h"
 }
 
-#define NUM_TREES 1000
-#define NUM_GENERATIONS 10
+#define NUM_TREES 20
+#define NUM_GENERATIONS 50
 void process_tree(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 void process_tree_aux(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 
@@ -228,6 +228,7 @@ void gpu_prearation(double *population, double *target_values, int target_values
 
 
 int main(int argc, char *argv[]) {
+    srand(time(NULL));
     //Parsing dataset file, and adding its values to the dataset array
     int num_columns = parse_file_columns(argv[1]); //x0,x1,x2,x3,...,xn and y
     int num_rows = parse_file_rows(argv[1]);
