@@ -53,7 +53,7 @@ Finally, you should define the goals of your project. For instance,
 To understand the underlying principles of the implementation we first have to introduce the main concepts.
 \begin{itemize}
 	\item The semantic syntax our work will be based on will be presented as a tree structure, each node containing either a mathematical operator, a constant or a variable which can be swapped by a value from a given data set.
-	\item To start off the program, we must introduce an initial data set. The data set will be read as a text file, each line of the text file containing randomly generated values and a final target value. These random data set values are to be added to trees that contain variables, each variable having its own index to determine which random value to swap the variable by. After all the necessary swaps are made, the final value is computed for each line of the data set and the fitness of the semantic tree is determined by calculating the Mean Squared Error (MSE) between the calculated values (O) and the target values (T): $$\frac{1}{n}\sum_{i=1}^{n} (O_i - T_i)^{2}$$
+	\item To start off the program, we must introduce an initial data set. The data set will be read as a text file, each line of the text file containing randomly generated values and a final target value. These random data set values are to be added to trees that contain variables, each variable having its own index to determine which random value to swap the variable by. After all the necessary swaps are made, the final value is computed for each line of the data set and the fitness of the syntax tree is determined by calculating the Mean Squared Error (MSE) between the calculated values (O) and the target values (T): $$\frac{1}{n}\sum_{i=1}^{n} (O_i - T_i)^{2}$$
 \end{itemize}
 
 \section{Approach}
@@ -68,7 +68,7 @@ Given the initial data set, we first have to run the values through all the gene
 
 The algorithm works as follows: for every even generation cycle, the GPU threads with even IDs will look for the best fitness only within the even numbered indexes on the matrix. The GPU threads with odd numbered IDs will do the same but on odd indexes. When the best fitness is found, the index of the column to which it belongs will be appended to that generation cycle (or row).
 
-For every odd generation cycle, the GPU threads within the first half of the X axis in the tree index matrix will look for the best fitness within the first half of the matrix, the rest of the threads will search the other half.
+For every odd generation cycle, the GPU threads within the first half of the X axis in the tree index matrix will look for the best fitness within the first half of the matrix, the rest of the threads will search the other half. To each half of the row of the current generation cycle, the index of best fitness of the respective half will be appended.
 
 Given this alternating crossover algorithm, we can achieve a less linear evolution from generation to generation of each sequence. At Algorithm~\ref{crossover_alg} we can see a pseudo code representation of the algorithm.
 
@@ -98,11 +98,18 @@ Given this alternating crossover algorithm, we can achieve a less linear evoluti
 
 
 \section{Implementation Details}
+Before any values could be first calculated, we needed some form of input to compare values with. This lead to the implementation of a data set parser. The data set is a text file in which all the variable and target values are defined. Each line has an equal amount of values \textit{Y} written, the last of which corresponds to the target value. Both variable values and target values are then extracted and stored in separate arrays which will be used to calculate the fitness for the first generation.
 
-In this section you can talk about details of how you implemented your approach. Depending on the detail of your approach, this might be an optional section.
+To store and calculate the values, a set number of random syntax trees have to be initially generated. Each node of the tree as previously mentioned can be a literal value, a variable or a mathematical operator. After generating the trees, each one of them must be run through the data set to evaluate its fitness by calculating the mathematical operations defined and comparing it with the target values. The computation is handled as a Reverse Polish Notation calculator (RPN) according to the following procedures:
+\begin{itemize}
+	\item A seperate LIFO stack to store literal values and variables is created
+	\item The tree is traversed in postorder so that the root operation or value is read last
+	\item If either a literal or a variable are present, they are pushed into the stack
+	\item If a mathematical operation is read, 2 values are popped out of the stack for computing, and the resulting value is pushed back into the stack
+	\item At the end of the processing, the final value is extracted from the stack and stored in a result matrix of size $$N_{trees}*dataset_{rows}$$ with each row representing the calculated values for a given data set row of a tree and each column the resulting values to compare with the target values.
+\end{itemize}
 
-As an example, I would detail how I implemented the phaser in the genetic algorithm, or how I implemented parallel mergesort on ForkJoin. Another aspect could be how to organize your arrays to minimize overhead in recursive calls.
-
+The main parallelization applied to the algorithm is done by taking advantage of the much higher amount of threads on a GPU compared to a CPU. In order to better take advantage of all the computational power on the GPU we first have to copy all the data from CPU memory to GPU memory by first reserving memory for the array by using cudaMalloc(array,size) and then copying the data currently residing on CPU memory to the newly GPU memory allocated array using cudaMemcpy(\texttt{o\_array,t\_array,size,cudaMemcpyHostToDevice}) , the keyword cudaMemcpyHostToDevice signals that the array from which the contents are to be copied (\texttt{o\_array}) is residing in CPU memory and the target array to which the values are copied to (\texttt{t\_array}) is residing in the GPU memory.
 
 \section{Evaluation}
 
