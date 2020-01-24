@@ -1,23 +1,29 @@
 \documentclass[runningheads]{llncs}
 
 \usepackage{graphicx}
-
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
 
 \begin{document}
 
 % \thanks{Supported by organization x.}
-\title{Paper Title}
-\author{First Author\inst{1} \and
-Second Author\inst{1}
+\title{Semantic GP}
+\author{João David\inst{1} \and
+Ye Yang\inst{1}
 }
 %\authorrunning{F. Author et al.}
 
 \institute{Departamento de Informática da Faculdade de Ciências da Universidade de Lisboa
-\email{\{fcXXXX,fcYYYY\}@alunos.fc.ul.pt}}
+\email{\{fc49448,fc49521\}@alunos.fc.ul.pt}}
 
 \maketitle
 
 \begin{abstract}
+Semantic programming is mainly a way to reach a target value, given some input, the way the input 
+
+
 The first sentence of an abstract should clearly introduce the topic of the paper so that readers can relate it to other work they are familiar with. However, an analysis of abstracts across a range of fields show that few follow this advice, nor do they take the opportunity to summarize previous work in their second sentence. A central issue is the lack of structure in standard advice on abstract writing, so most authors don’t realize the third sentence should point out the deficiencies of this existing research. To solve this problem, we describe a technique that structures the entire abstract around a set of six sentences, each of which has a specific role, so that by the end of the first four sentences you have introduced the idea fully. This structure then allows you to use the fifth sentence to elaborate a little on the research, explain how it works, and talk about the various ways that you have applied it, for example to teach generations of new graduate students how to write clearly. This technique is helpful because it clarifies your thinking and leads to a final sentence that summarizes why your research matters.
 
 \keywords{First keyword  \and Second keyword \and Another keyword.}
@@ -44,9 +50,43 @@ Finally, you should define the goals of your project. For instance,
 
 
 \section{Background}
+To understand the underlying principles of the implementation we first have to introduce the main concepts.
+\begin{itemize}
+	\item To determine the error margin between the calculated value and the target value we use Mean Squared Error (MSE), the closer the value is to 0 the higher the fitness: $$\frac{1}{n}\sum_{i=1}^{n} (O_i - T_i)^{2}$$
+\end{itemize}
 
-This is an optional section, as it depends on your project. In projects where a given specific knowledge is required to understand the article, you should give a brief introduction of the required concepts. In the case of genetic algorithms, you should present the basic algorithm in this section.
+The main genetic algorithm to crossover different trees of computation takes into account the following variables:
+\begin{itemize}
+	\item \textit{N} $\rightarrow$ \ the total number of trees
+	\item \textit{gen} $\rightarrow$ \ the current generation cycle
+	\item \textit{threadId} $\rightarrow$ \ the ID of a GPU thread
+\end{itemize}
 
+The algorithm works as follows: for every even generation cycle, the GPU threads with even IDs will look for the best fitness only within the even numbered indexes on the matrix. The GPU threads with odd numbered IDs will do the same but on odd indexes.
+For every odd generation cycle, the GPU threads with
+\begin{algorithm}
+\caption{Tree crossover}\label{euclid}
+\begin{algorithmic}[1]
+\Procedure{TreeCrossover}{}
+\State \textbf{int} \textit{max}
+\If {$\textit{gen} \ \%\ 2 == 0$} 
+	\For{$i = threadId\ \%\ 2;\ i < N;\ i+=2$}
+		\State {find highest fitness and store in \textit{max}}
+	\EndFor
+\Else \If {$threadId \ < N/2$}
+	\For{$i = 0;\ i < N/2;\ i++$}
+		\State {find highest fitness and store in \textit{max}}
+	\EndFor
+\Else
+	\For{$i = N/2;\ i < N;\ i++$}
+		\State {find highest fitness and store in \textit{max}}
+	\EndFor
+\EndIf
+\EndIf
+\State \Return \textit{max}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \section{Approach}
 
@@ -71,12 +111,6 @@ In this section you should describe the machine(s) in which you are going to eva
 In this section you should present the results. Do not forget to explain where the data came from. 
 
 You should include (ideally vectorial) plots, with a descriptive caption. Make sure all the plots (Like Figure~\ref{fig1} are well identified and axis and metrics are defined.
-
-\begin{figure}[htbp]
-\includegraphics[width=\textwidth]{code/performance.eps}
-\caption{Comparison of the performance of sequential and parallel versions of the algorithm.} \label{fig1}
-\end{figure}
-
 
 \subsection{Discussion}
 
