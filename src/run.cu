@@ -10,8 +10,8 @@ extern "C" {
     #include "../include/dataset_parser.h"
 }
 
-#define NUM_TREES 10
-#define NUM_GENERATIONS 3
+#define NUM_TREES 1000
+#define NUM_GENERATIONS 10
 void process_tree(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 void process_tree_aux(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 
@@ -83,38 +83,47 @@ void process_tree_aux(const double *dataset, int num_vars, int row_index, struct
     }
 }
 
+__device__ double sigmoid(double x) {
+    return 1 / (1 + exp(-x));
+}
 
-__global__ void gpu_generations(int generation, int *matrix_gen_individual, double *first_fitness, double *old_fitness, double *new_fitness) {
-    extern __shared__ double shared[];
-    if (generation == 0) {
-        shared[threadIdx.x] = first_fitness[threadIdx.x];
-    } else {
-        shared[threadIdx.x] = old_fitness[threadIdx.x];
-    }
-    __syncthreads();
-    if (generation % 2 == 0) {
-        int min_fitness_index = threadIdx.x % 2;
-        for(int i = threadIdx.x % 2; i < NUM_TREES; i += 2) {
-            min_fitness_index = (min_fitness_index < shared[i] ? min_fitness_index : i);
-        }
-        new_fitness[threadIdx.x] = min_fitness_index;
-    } else {
-        int boundary = NUM_TREES / 2;
-        if (threadIdx.x < boundary) {
-            int min_fitness_index = 0;
-            for(int i = 0; i < boundary; i++) {
-                min_fitness_index = (min_fitness_index < shared[i] ? min_fitness_index : i);
+
+__global__ void gpu_generations(int *dev_matrix_gen, double *dev_old_fitness, double *dev_new_fitness) {
+    extern __shared__ double shared[];//shared_curr_matrix_line
+    shared[threadIdx.x] = dev_old_fitness[threadIdx.x];
+    dev_matrix_gen[threadIdx.x] = threadIdx.x; //0 * NUM_TREES + threadIdx.x = threadIdx.x
+    
+    int min_fitness_index = 0;
+    for(int gen = 1; gen < NUM_GENERATIONS; gen++) {
+        __syncthreads();
+        if (gen % 2 == 0) {
+            min_fitness_index = threadIdx.x % 2;
+            for(int i = min_fitness_index + 2; i < NUM_TREES; i += 2) {
+                min_fitness_index = (dev_old_fitness[min_fitness_index] < dev_old_fitness[i] ? min_fitness_index : i);
             }
-            new_fitness[threadIdx.x] = min_fitness_index;
+            dev_matrix_gen[gen * NUM_TREES + threadIdx.x] = min_fitness_index;
         } else {
-            int min_fitness_index = boundary;
-            for(int i = boundary; i < NUM_TREES; i++) {
-                min_fitness_index = (min_fitness_index < shared[i] ? min_fitness_index : i);
+            int boundary = NUM_TREES / 2;
+            if (threadIdx.x < boundary) {
+                min_fitness_index = 0;
+                for(int i = min_fitness_index + 1; i < boundary; i++) {
+                    min_fitness_index = (dev_old_fitness[min_fitness_index] < dev_old_fitness[i] ? min_fitness_index : i);
+                }
+                dev_matrix_gen[gen * NUM_TREES + threadIdx.x] = min_fitness_index;
+            } else {
+                min_fitness_index = boundary;
+                for(int i = min_fitness_index + 1; i < NUM_TREES; i++) {
+                    min_fitness_index = (dev_old_fitness[min_fitness_index] < dev_old_fitness[i] ? min_fitness_index : i);
+                }
+                dev_matrix_gen[gen * NUM_TREES + threadIdx.x] = min_fitness_index;
             }
-            new_fitness[threadIdx.x] = min_fitness_index;
         }
+        //Calculate new fitness
+        __syncthreads();
+        dev_new_fitness[threadIdx.x] = dev_old_fitness[threadIdx.x] + sigmoid(dev_old_fitness[min_fitness_index]);
+        __syncthreads();
+        dev_old_fitness[threadIdx.x] = dev_new_fitness[threadIdx.x];
     }
-
 }
 
 
@@ -153,6 +162,10 @@ void gpu_prearation(double *population, double *target_values, int target_values
     double *dev_fitness;
     cudaMalloc(&dev_fitness, NUM_TREES * sizeof(double));
 
+    double *new_fitness = (double*) malloc(NUM_TREES * sizeof(double));
+    double *dev_new_fitness;
+    cudaMalloc(&dev_new_fitness, NUM_TREES * sizeof(double));
+
 
     //Prints dataset content
     printf("---------- before PRINTING population CONTENT ----------\n");
@@ -182,8 +195,28 @@ void gpu_prearation(double *population, double *target_values, int target_values
         printf("%f , ", fitness[i]);
     }
     printf("\n");
+    int matrix_gen_size = NUM_TREES * NUM_GENERATIONS * sizeof(int);
+    int *matrix_gen = (int*) malloc(matrix_gen_size);
+    int *dev_matrix_gen;
+    cudaMalloc(&dev_matrix_gen, matrix_gen_size);
+    gpu_generations<<<1, NUM_TREES, sizeof(double) * NUM_TREES * 2>>>(dev_matrix_gen, dev_fitness, dev_new_fitness);
+    cudaMemcpy(matrix_gen, dev_matrix_gen, matrix_gen_size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(new_fitness, dev_new_fitness, NUM_TREES*sizeof(double), cudaMemcpyDeviceToHost);
 
-    //populationULT(tree, row) population[tree * num_rows + row]
+    printf("---------- PRINTING MATRIX GEN ----------\n");
+    for(int i = 0; i < NUM_GENERATIONS; i++) {
+        for(int j = 0; j < NUM_TREES; j++){
+            printf("%d ", matrix_gen[i * NUM_TREES + j]);
+        }
+        printf("\n");
+    }
+
+    printf("---------- PRINTING new fitness ----------\n");
+    for(int i = 0; i < NUM_TREES; i++) {
+        printf("%f , ", new_fitness[i]);
+    }
+    printf("\n");
+
 }
 
 
