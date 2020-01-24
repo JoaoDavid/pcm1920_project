@@ -1,7 +1,9 @@
+#include <assert.h>
+#include <cuda.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <cuda.h>
+#include <sys/time.h>
 
 extern "C" { 
     #include "../include/tree_generator.h"
@@ -10,8 +12,8 @@ extern "C" {
     #include "../include/dataset_parser.h"
 }
 
-#define NUM_TREES 20
-#define NUM_GENERATIONS 50
+#define NUM_TREES 5
+#define NUM_GENERATIONS 4
 void process_tree(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 void process_tree_aux(const double *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 
@@ -87,6 +89,10 @@ __device__ double sigmoid(double x) {
     return 1 / (1 + exp(-x));
 }
 
+double sigmoid_cpu(double x) {
+    return 1 / (1 + exp(-x));
+}
+
 
 __global__ void gpu_generations(int *dev_matrix_gen, double *dev_old_fitness, double *dev_new_fitness) {
     extern __shared__ double shared[];//shared_curr_matrix_line
@@ -149,7 +155,7 @@ __global__ void gpu_first_fitness(double *dev_population, double *dev_target_val
     }
 }
 
-void gpu_prearation(double *population, double *target_values, int target_values_size, int population_size, int num_rows) {
+void gpu_prearation(double *population, double *target_values, int *matrix_gen, int target_values_size, int population_size, int matrix_gen_size, int num_rows) {
     double *dev_population;
     cudaMalloc(&dev_population, population_size);
     cudaMemcpy(dev_population, population, population_size, cudaMemcpyHostToDevice);
@@ -195,8 +201,6 @@ void gpu_prearation(double *population, double *target_values, int target_values
         printf("%f , ", fitness[i]);
     }
     printf("\n");
-    int matrix_gen_size = NUM_TREES * NUM_GENERATIONS * sizeof(int);
-    int *matrix_gen = (int*) malloc(matrix_gen_size);
     int *dev_matrix_gen;
     cudaMalloc(&dev_matrix_gen, matrix_gen_size);
     gpu_generations<<<1, NUM_TREES, sizeof(double) * NUM_TREES * 2>>>(dev_matrix_gen, dev_fitness, dev_new_fitness);
@@ -221,14 +225,85 @@ void gpu_prearation(double *population, double *target_values, int target_values
 
 
 
-//__global__ 
-/*void gpu_compute(int curr_iteration, int num_rows, int num_trees) {
-    
-}*/
+void cpu_seq_version(double *population, double *target_values, int *cpu_matrix_gen, int num_rows) {
+    double *old_fitness = (double*) malloc(NUM_TREES * sizeof(double));
+    double *new_fitness = (double*) malloc(NUM_TREES * sizeof(double));
+    double *aux;
+
+    for(int i = 0; i < NUM_TREES; i++) {
+        double curr = 0;
+        for(int j = 0; j < num_rows; j++){
+            curr += pow(population[i * num_rows + j] - target_values[j],2);
+        }
+        old_fitness[i] = curr / num_rows;
+    }
+    printf("---------- PRINTING fitness cpu ----------\n");
+    for(int i = 0; i < NUM_TREES; i++) {
+        printf("%f , ", old_fitness[i]);
+    }
+    printf("\n");
+    // second part of the algorithm
+    for(int i = 0; i < NUM_TREES; i++) { //gen = 0
+        cpu_matrix_gen[i] = i;
+    }
+    for(int gen = 1; gen < NUM_GENERATIONS; gen++) {
+        if (gen % 2 == 0) {
+            int min_fitness_index_even = 0;
+            int min_fitness_index_odd = 1;
+            for(int i = 2; i < NUM_TREES; i++) {
+                if (i % 2 == 0) {
+                    min_fitness_index_even = (old_fitness[min_fitness_index_even] < old_fitness[i] ? min_fitness_index_even : i);
+                } else {
+                    min_fitness_index_odd = (old_fitness[min_fitness_index_odd] < old_fitness[i] ? min_fitness_index_odd : i);
+                }
+            }
+            for(int i = 0; i < NUM_TREES; i++) {
+                if (i % 2 == 0) {
+                    cpu_matrix_gen[gen * NUM_TREES + i] = min_fitness_index_even;
+                    new_fitness[i] = old_fitness[i] + sigmoid_cpu(old_fitness[min_fitness_index_even]);
+                } else {
+                    cpu_matrix_gen[gen * NUM_TREES + i] = min_fitness_index_odd;
+                    new_fitness[i] = old_fitness[i] + sigmoid_cpu(old_fitness[min_fitness_index_odd]);
+                }
+            }
+        } else {
+            int boundary = NUM_TREES / 2;
+            int min_fitness_index_first_half = 0;
+            int min_fitness_index_second_half = boundary;
+            for(int i = 1; i < NUM_TREES; i++) {
+                if (i < boundary) {
+                    min_fitness_index_first_half = (old_fitness[min_fitness_index_first_half] < old_fitness[i] ? min_fitness_index_first_half : i);
+                } else {
+                    min_fitness_index_second_half = (old_fitness[min_fitness_index_second_half] < old_fitness[i] ? min_fitness_index_second_half : i);
+                }
+            }
+            for(int i = 0; i < NUM_TREES; i++) {
+                if (i < boundary) {
+                    cpu_matrix_gen[gen * NUM_TREES + i] = min_fitness_index_first_half;
+                    new_fitness[i] = old_fitness[i] + sigmoid_cpu(old_fitness[min_fitness_index_first_half]);
+                } else {
+                    cpu_matrix_gen[gen * NUM_TREES + i] = min_fitness_index_second_half;
+                    new_fitness[i] = old_fitness[i] + sigmoid_cpu(old_fitness[min_fitness_index_second_half]);
+                }
+            }
+        }
+        aux = old_fitness;
+        old_fitness = new_fitness;
+        new_fitness = aux;
+    }
+    old_fitness = new_fitness;
+    printf("---------- PRINTING MATRIX GEN  cpu----------\n");
+    for(int i = 0; i < NUM_GENERATIONS; i++) {
+        for(int j = 0; j < NUM_TREES; j++){
+            printf("%d ", cpu_matrix_gen[i * NUM_TREES + j]);
+        }
+        printf("\n");
+    }printf("\n"); 
+}
 
 
 int main(int argc, char *argv[]) {
-    srand(time(NULL));
+    //srand(time(NULL));
     //Parsing dataset file, and adding its values to the dataset array
     int num_columns = parse_file_columns(argv[1]); //x0,x1,x2,x3,...,xn and y
     int num_rows = parse_file_rows(argv[1]);
@@ -266,7 +341,13 @@ int main(int argc, char *argv[]) {
         printf("%f \n", target_values[i]);
     }
 
-    gpu_prearation(population, target_values, target_values_size, population_size, num_rows);
+    int matrix_gen_size = NUM_TREES * NUM_GENERATIONS * sizeof(int);
+    int *cpu_matrix_gen = (int*) malloc(matrix_gen_size);
+    int *gpu_matrix_gen = (int*) malloc(matrix_gen_size);
+
+    cpu_seq_version(population, target_values, cpu_matrix_gen, num_rows);
+
+    gpu_prearation(population, target_values, gpu_matrix_gen, target_values_size, population_size, matrix_gen_size, num_rows);
 
 
     free(dataset);
@@ -279,5 +360,17 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < NUM_TREES; i++) {
         node_destroy(trees[i]);
     }
+
+    if (memcmp(cpu_matrix_gen, gpu_matrix_gen, matrix_gen_size) != 0) {
+        fprintf(stderr, "MATRIX GEN CPU DIFFERENT FROM GPU - FAIL!\n");
+    } else {
+        printf("MATRIX GEN CPU EQUAL TO GPU - OK\n");
+    }
+
+    /*if (memcmp(cpu_matrix_gen, gpu_matrix_gen, matrix_gen_size) != 0) {
+        fprintf(stderr, "FITNESS FAIL!\n");
+    } else {
+        printf("FITNESS OK\n");
+    }*/
 
 }
