@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.19)  23 JAN 2020 19:19
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.22)  24 JAN 2020 18:25
 entering extended mode
 **./samplepaper.tex
 (samplepaper.tex
@@ -209,10 +209,10 @@ LaTeX Font Info:    Redeclaring font encoding OMS on input line 734.
 LaTeX Info: Redefining \[ on input line 2858.
 LaTeX Info: Redefining \] on input line 2859.
 )
-("C:\Program Files\MiKTeX 2.9\tex/latex/mathtools\mathtools.sty"
+("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/latex/mathtools\mathtools.st
+y"
 Package: mathtools 2020/01/17 v1.23 mathematical typesetting tools
-
-("C:\Program Files\MiKTeX 2.9\tex/latex/tools\calc.sty"
+ ("C:\Program Files\MiKTeX 2.9\tex/latex/tools\calc.sty"
 Package: calc 2017/05/25 v4.3 Infix arithmetic (KKT,FJ)
 \calc@Acount=\count130
 \calc@Bcount=\count131
@@ -225,7 +225,7 @@ LaTeX Info: Redefining \addtolength on input line 81.
 \calc@Ccount=\count132
 \calc@Cskip=\skip50
 )
-("C:\Program Files\MiKTeX 2.9\tex/latex/mathtools\mhsetup.sty"
+("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/latex/mathtools\mhsetup.sty"
 Package: mhsetup 2017/03/31 v1.3 programming setup (MH)
 )
 LaTeX Info: Thecontrolsequence`\('isalreadyrobust on input line 129.
@@ -242,11 +242,11 @@ LaTeX Info: Thecontrolsequence`\]'isalreadyrobust on input line 129.
 \l_MT_above_shortintertext_sep=\dimen143
 \l_MT_below_shortintertext_sep=\dimen144
 )
-("C:\Program Files\MiKTeX 2.9\tex/latex/algorithms\algorithm.sty"
+("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/latex/algorithms\algorithm.s
+ty"
 Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
 nment
-
-("C:\Program Files\MiKTeX 2.9\tex/latex/float\float.sty"
+ ("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/latex/float\float.sty"
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
 \c@float@type=\count134
 \float@exts=\toks24
@@ -260,10 +260,12 @@ Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
 \@float@every@algorithm=\toks26
 \c@algorithm=\count135
 )
-("C:\Program Files\MiKTeX 2.9\tex/latex/algorithmicx\algpseudocode.sty"
+("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/latex/algorithmicx\algpseudo
+code.sty"
 Package: algpseudocode 
 
-("C:\Program Files\MiKTeX 2.9\tex/latex/algorithmicx\algorithmicx.sty"
+("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/latex/algorithmicx\algorithm
+icx.sty"
 Package: algorithmicx 2005/04/27 v1.2 Algorithmicx
 
 Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
@@ -311,35 +313,32 @@ LaTeX Font Info:    ... okay on input line 9.
 ) ("C:\Program Files\MiKTeX 2.9\tex/latex/epstopdf-pkg\epstopdf-base.sty"
 Package: epstopdf-base 2019-12-09 v2.10 Base part for package epstopdf
 
-("C:\Program Files\MiKTeX 2.9\tex/generic/infwarerr\infwarerr.sty"
+("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/generic/infwarerr\infwarerr.
+sty"
 Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
-)
-("C:\Program Files\MiKTeX 2.9\tex/latex/grfext\grfext.sty"
+) ("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/latex/grfext\grfext.sty"
 Package: grfext 2019/12/03 v1.3 Manage graphics extensions (HO)
 
-("C:\Program Files\MiKTeX 2.9\tex/generic/oberdiek\kvdefinekeys.sty"
-Package: kvdefinekeys 2016/05/16 v1.4 Define keys (HO)
-
-("C:\Program Files\MiKTeX 2.9\tex/generic/oberdiek\ltxcmds.sty"
-Package: ltxcmds 2016/05/16 v1.23 LaTeX kernel commands for general use (HO)
-)))
-("C:\Program Files\MiKTeX 2.9\tex/latex/kvoptions\kvoptions.sty"
+("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/generic/kvdefinekeys\kvdefin
+ekeys.sty"
+Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
+))
+("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/latex/kvoptions\kvoptions.st
+y"
 Package: kvoptions 2019/11/29 v3.13 Key value format for package options (HO)
 
-("C:\Program Files\MiKTeX 2.9\tex/generic/oberdiek\kvsetkeys.sty"
-Package: kvsetkeys 2016/05/16 v1.17 Key value parser (HO)
-
-("C:\Program Files\MiKTeX 2.9\tex/generic/oberdiek\etexcmds.sty"
-Package: etexcmds 2016/05/16 v1.6 Avoid name clashes with e-TeX commands (HO)
-
-("C:\Program Files\MiKTeX 2.9\tex/generic/iftex\ifluatex.sty"
-Package: ifluatex 2019/10/25 v1.5 ifluatex legacy package. Use iftex instead.
+("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/generic/ltxcmds\ltxcmds.sty"
+Package: ltxcmds 2019/12/15 v1.24 LaTeX kernel commands for general use (HO)
+)
+("C:\Users\Dat Swag\AppData\Roaming\MiKTeX\2.9\tex/generic/kvsetkeys\kvsetkeys.
+sty"
+Package: kvsetkeys 2019/12/15 v1.18 Key value parser (HO)
+)) ("C:\Program Files\MiKTeX 2.9\tex/latex/pdftexcmds\pdftexcmds.sty"
+Package: pdftexcmds 2019/11/24 v0.31 Utility functions of pdfTeX for LuaTeX (HO
+)
 
 ("C:\Program Files\MiKTeX 2.9\tex/generic/iftex\iftex.sty"
 Package: iftex 2019/11/07 v1.0c TeX engine tests
-)))))
-("C:\Program Files\MiKTeX 2.9\tex/latex/pdftexcmds\pdftexcmds.sty"
-Package: pdftexcmds 2019/11/24 v0.31 Utility functions of pdfTeX for LuaTeX (HO
 )
 Package pdftexcmds Info: \pdf@primitive is available.
 Package pdftexcmds Info: \pdf@ifprimitive is available.
@@ -370,21 +369,21 @@ LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
 (Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 29.
  [1
 
-{C:/Users/Ye Yang/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}] [2]
+{C:/Users/Dat Swag/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}] [2]
 
-LaTeX Warning: Reference `fig1' on page 3 undefined on input line 113.
+LaTeX Warning: Reference `fig1' on page 3 undefined on input line 118.
+
+[3]
+
+LaTeX Warning: Citation `DBLP:journals/heuristics/ChuB98' on page 4 undefined o
+n input line 128.
 
 
-LaTeX Warning: Citation `DBLP:journals/heuristics/ChuB98' on page 3 undefined o
-n input line 123.
-
-
-Overfull \hbox (4.04149pt too wide) in paragraph at lines 126--127
+Overfull \hbox (4.04149pt too wide) in paragraph at lines 131--132
 []\OT1/cmr/m/n/10 When us-ing Bib-TeX ref-er-ences, I sug-gest us-ing DBLP[], l
 eav-ing Google Scholar
  []
 
-[3]
 No file samplepaper.bbl.
 [4] (samplepaper.aux)
 
@@ -395,13 +394,13 @@ LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 3789 strings out of 492483
- 52975 string characters out of 3131030
- 135847 words of memory out of 3000000
- 8075 multiletter control sequences out of 15000+200000
+ 3768 strings out of 492483
+ 53121 string characters out of 3130364
+ 137421 words of memory out of 3000000
+ 8058 multiletter control sequences out of 15000+200000
  10052 words of font info for 36 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 55i,9n,32p,1170b,307s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 34i,9n,27p,1170b,307s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Pr
 ogram Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Program Fi
 les/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx9.pfb><C:/Program Files/MiKTe
@@ -418,7 +417,7 @@ ts/type1/public/amsfonts/cm/cmsy9.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/
 public/amsfonts/cm/cmti10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/a
 msfonts/cm/cmti9.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/c
 m/cmtt9.pfb>
-Output written on samplepaper.pdf (4 pages, 200476 bytes).
+Output written on samplepaper.pdf (4 pages, 202210 bytes).
 PDF statistics:
  83 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)

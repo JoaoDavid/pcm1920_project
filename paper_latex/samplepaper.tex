@@ -9,7 +9,7 @@
 \begin{document}
 
 % \thanks{Supported by organization x.}
-\title{Semantic GP}
+\title{Semantic Genetic Programming on the GPU}
 \author{João David\inst{1} \and
 Ye Yang\inst{1}
 }
@@ -52,9 +52,11 @@ Finally, you should define the goals of your project. For instance,
 \section{Background}
 To understand the underlying principles of the implementation we first have to introduce the main concepts.
 \begin{itemize}
-	\item To determine the error margin between the calculated value and the target value we use Mean Squared Error (MSE), the closer the value is to 0 the higher the fitness: $$\frac{1}{n}\sum_{i=1}^{n} (O_i - T_i)^{2}$$
+	\item The semantic syntax our work will be based on will be presented as a tree structure, each node containing either a mathematical operator, a constant or a variable which can be swapped by a value from a given data set.
+	\item To start off the program, we must introduce an initial data set. The data set will be read as a text file, each line of the text file containing randomly generated values and a final target value. These random data set values are to be added to trees that contain variables, each variable having its own index to determine which random value to swap the variable by. After all the necessary swaps are made, the final value is computed for each line of the data set and the fitness of the semantic tree is determined by calculating the Mean Squared Error (MSE) between the calculated values (O) and the target values (T): $$\frac{1}{n}\sum_{i=1}^{n} (O_i - T_i)^{2}$$
 \end{itemize}
 
+\section{Approach}
 The main genetic algorithm to crossover different trees of computation takes into account the following variables:
 \begin{itemize}
 	\item \textit{N} $\rightarrow$ \ the total number of trees
@@ -62,10 +64,16 @@ The main genetic algorithm to crossover different trees of computation takes int
 	\item \textit{threadId} $\rightarrow$ \ the ID of a GPU thread
 \end{itemize}
 
-The algorithm works as follows: for every even generation cycle, the GPU threads with even IDs will look for the best fitness only within the even numbered indexes on the matrix. The GPU threads with odd numbered IDs will do the same but on odd indexes.
-For every odd generation cycle, the GPU threads with
-\begin{algorithm}
-\caption{Tree crossover}\label{euclid}
+Given the initial data set, we first have to run the values through all the generated trees, after which we compute the respective fitness values for every single tree and store it in a matrix. We then place the indexes of each tree in the first row of a $N * gen$ sized matrix. Each column represents a concatenation of trees by summation, the trees are represented by their indexes from 0 to N-1.
+
+The algorithm works as follows: for every even generation cycle, the GPU threads with even IDs will look for the best fitness only within the even numbered indexes on the matrix. The GPU threads with odd numbered IDs will do the same but on odd indexes. When the best fitness is found, the index of the column to which it belongs will be appended to that generation cycle (or row).
+
+For every odd generation cycle, the GPU threads within the first half of the X axis in the tree index matrix will look for the best fitness within the first half of the matrix, the rest of the threads will search the other half.
+
+Given this alternating crossover algorithm, we can achieve a less linear evolution from generation to generation of each sequence. At Algorithm~\ref{crossover_alg} we can see a pseudo code representation of the algorithm.
+
+\begin{algorithm} \label{crossover_alg}
+\caption{Tree crossover}
 \begin{algorithmic}[1]
 \Procedure{TreeCrossover}{}
 \State \textbf{int} \textit{max}
@@ -88,9 +96,6 @@ For every odd generation cycle, the GPU threads with
 \end{algorithmic}
 \end{algorithm}
 
-\section{Approach}
-
-In this section, you should present your approach. Notice that an approach may be different than an implementation. An approach should be generic and ideally applied for different machines, virtual machines or languages. You should present algorithms or generic diagrams explaining the approach.
 
 \section{Implementation Details}
 
