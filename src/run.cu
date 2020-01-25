@@ -223,6 +223,9 @@ __global__ void gpu_generations_third(int gen, int *dev_matrix_gen, float *dev_o
             dev_matrix_gen[index_matrix_global] = dev_fitness_index_aux[min_fitness_index];
 
         }
+        dev_new_fitness[index_fitness_global] = dev_old_fitness[index_fitness_global] + sigmoid(dev_old_fitness[index_fitness_global]);
+        __syncthreads();
+        dev_old_fitness[index_fitness_global] = dev_new_fitness[index_fitness_global];
     }
 }
 
