@@ -1,5 +1,7 @@
 \documentclass[runningheads]{llncs}
 
+\usepackage{tikz}
+\usepackage{tikz-qtree}
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{mathtools}
@@ -21,12 +23,9 @@ Ye Yang\inst{1}
 \maketitle
 
 \begin{abstract}
-Semantic programming is mainly a way to reach a target value, given some input, the way the input 
+Semantic Genetic programming aims to not only syntatically manipulate the data to promote a better fitness test, but also ensuring that the resulting function is semantically correct. Traditional implementations of genetic programs have always been done on CPU, taking advantage of its multiple cores to do parallel work. We aim to improve on the parallelization of the algorithm by implementing on the Graphics Processing Unit (GPU), taking advantage of its vast amount of processing cores, which are multiple times that of the CPU. The implementation will be done on an NVidia GPU which allows us to use the supported Compute Unified Device Architecture (CUDA) API, which allows us to directly manipulate the GPU memory and threads necessary to perform fitness tests and crossover.
 
-
-The first sentence of an abstract should clearly introduce the topic of the paper so that readers can relate it to other work they are familiar with. However, an analysis of abstracts across a range of fields show that few follow this advice, nor do they take the opportunity to summarize previous work in their second sentence. A central issue is the lack of structure in standard advice on abstract writing, so most authors don’t realize the third sentence should point out the deficiencies of this existing research. To solve this problem, we describe a technique that structures the entire abstract around a set of six sentences, each of which has a specific role, so that by the end of the first four sentences you have introduced the idea fully. This structure then allows you to use the fifth sentence to elaborate a little on the research, explain how it works, and talk about the various ways that you have applied it, for example to teach generations of new graduate students how to write clearly. This technique is helpful because it clarifies your thinking and leads to a final sentence that summarizes why your research matters.
-
-\keywords{First keyword  \and Second keyword \and Another keyword.}
+\keywords{Semantic Genetic programming  \and GPU \and CUDA.}
 \end{abstract}
 %
 %
@@ -56,6 +55,8 @@ To understand the underlying principles of the implementation we first have to i
 	\item To start off the program, we must introduce an initial data set. The data set will be read as a text file, each line of the text file containing randomly generated values and a final target value. These random data set values are to be added to trees that contain variables, each variable having its own index to determine which random value to swap the variable by. After all the necessary swaps are made, the final value is computed for each line of the data set and the fitness of the syntax tree is determined by calculating the Mean Squared Error (MSE) between the calculated values (O) and the target values (T): $$\frac{1}{n}\sum_{i=1}^{n} (O_i - T_i)^{2}$$
 \end{itemize}
 
+The main parallelization applied to the algorithm is done by taking advantage of the much higher amount of threads on a GPU compared to a CPU. In order to better take advantage of all the computational power on the GPU we first have to copy all the data from CPU memory to GPU memory by allocating memory for the array using cudaMalloc(\texttt{t\_array,size}) and then copying the data currently residing on CPU memory to the newly GPU memory allocated array using cudaMemcpy(\texttt{o\_array,t\_array,size,cudaMemcpyHostToDevice}). The keyword cudaMemcpyHostToDevice signals that the array from which the contents are to be copied (\texttt{o\_array}) is residing in CPU memory and the target array to which the values are copied to (\texttt{t\_array}) is residing in the GPU memory. These are ncessary steps since neither the GPU nor the CPU have direct access to each other's memory region.
+
 \section{Approach}
 The main genetic algorithm to crossover different trees of computation takes into account the following variables:
 \begin{itemize}
@@ -63,6 +64,26 @@ The main genetic algorithm to crossover different trees of computation takes int
 	\item \textit{gen} $\rightarrow$ \ the current generation cycle
 	\item \textit{threadId} $\rightarrow$ \ the ID of a GPU thread
 \end{itemize}
+
+Each node on a syntax can hold a literal value, a variable or a mathematical operation. When processing a tree through a data set, each variable will be swapped by the corresponding value in the data set according to the variables index. In Figure \ref{syntree} we can see the tree representation of the mathematical formula $x0 * (x1+4)$ which is then processed according to a data set line containing the values: $0.5\quad 25.3\quad 6.2\quad 12$\ . The values within the data set that are not referenced by any variable in the tree are ignored, the final value computed is compared with the target value (12) which will evaluate the fitness of the tree.
+
+\begin{figure}
+\hfil
+\begin{tikzpicture}
+  \Tree [.* [.x0 ] 
+             [.+ [.x1 ] [.4 ]]]
+  %
+  \begin{scope}[shift = {(5cm, 0cm)}]
+  \Tree [.* [.$0.5$ ]  
+            [.+ [.$25.3$ ] [.4 ]]]
+  \end{scope}
+  %
+  \draw[->, yshift = -1.5cm] (2, 0) -- (3, 0);
+\end{tikzpicture}
+\hfil
+\caption{Syntax tree value swap example}
+\label{syntree}
+\end{figure}
 
 Given the initial data set, we first have to run the values through all the generated trees, after which we compute the respective fitness values for every single tree and store it in a matrix. We then place the indexes of each tree in the first row of a $N * gen$ sized matrix. Each column represents a concatenation of trees by summation, the trees are represented by their indexes from 0 to N-1.
 
@@ -72,7 +93,7 @@ For every odd generation cycle, the GPU threads within the first half of the X a
 
 Given this alternating crossover algorithm, we can achieve a less linear evolution from generation to generation of each sequence. At Algorithm~\ref{crossover_alg} we can see a pseudo code representation of the algorithm.
 
-\begin{algorithm} \label{crossover_alg}
+\begin{algorithm}
 \caption{Tree crossover}
 \begin{algorithmic}[1]
 \Procedure{TreeCrossover}{}
@@ -94,11 +115,12 @@ Given this alternating crossover algorithm, we can achieve a less linear evoluti
 \State \Return \textit{max}
 \EndProcedure
 \end{algorithmic}
+\label{crossover_alg}
 \end{algorithm}
 
 
 \section{Implementation Details}
-Before any values could be first calculated, we needed some form of input to compare values with. This lead to the implementation of a data set parser. The data set is a text file in which all the variable and target values are defined. Each line has an equal amount of values \textit{Y} written, the last of which corresponds to the target value. Both variable values and target values are then extracted and stored in separate arrays which will be used to calculate the fitness for the first generation.
+Before any values could be first calculated, we needed some form of input to compare values with. This lead to the implementation of a data set parser. The data set is a text file in which all the variables and target values are defined. Each line has an equal amount of values \textit{Y} written, the last of which corresponds to the target value. Both variable values and target values are then extracted and stored in separate arrays which will be used to calculate the fitness for the first generation of trees.
 
 To store and calculate the values, a set number of random syntax trees have to be initially generated. Each node of the tree as previously mentioned can be a literal value, a variable or a mathematical operator. After generating the trees, each one of them must be run through the data set to evaluate its fitness by calculating the mathematical operations defined and comparing it with the target values. The computation is handled as a Reverse Polish Notation calculator (RPN) according to the following procedures:
 \begin{itemize}
@@ -106,10 +128,13 @@ To store and calculate the values, a set number of random syntax trees have to b
 	\item The tree is traversed in postorder so that the root operation or value is read last
 	\item If either a literal or a variable are present, they are pushed into the stack
 	\item If a mathematical operation is read, 2 values are popped out of the stack for computing, and the resulting value is pushed back into the stack
-	\item At the end of the processing, the final value is extracted from the stack and stored in a result matrix of size $$N_{trees}*dataset_{rows}$$ with each row representing the calculated values for a given data set row of a tree and each column the resulting values to compare with the target values.
+	\item At the end of the processing, the final value is popped from the stack and stored in a result matrix of size $$N_{trees}*dataset_{rows}$$ with each row representing the calculated values for a given data set row by a syntax tree and each column the resulting values to compare with the target values.
 \end{itemize}
 
-The main parallelization applied to the algorithm is done by taking advantage of the much higher amount of threads on a GPU compared to a CPU. In order to better take advantage of all the computational power on the GPU we first have to copy all the data from CPU memory to GPU memory by first reserving memory for the array by using cudaMalloc(array,size) and then copying the data currently residing on CPU memory to the newly GPU memory allocated array using cudaMemcpy(\texttt{o\_array,t\_array,size,cudaMemcpyHostToDevice}) , the keyword cudaMemcpyHostToDevice signals that the array from which the contents are to be copied (\texttt{o\_array}) is residing in CPU memory and the target array to which the values are copied to (\texttt{t\_array}) is residing in the GPU memory.
+\subsection{GPU Parallelization}
+
+
+
 
 \section{Evaluation}
 
