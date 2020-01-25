@@ -196,35 +196,24 @@ __global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_
 }
 
 
-__global__ void gpu_calc_init_fitness(float *dev_population, float *dev_target_values, int num_rows, float *dev_fitness) {
+__global__ void gpu_calc_init_fitness(float *dev_population, float *dev_target_values, float *dev_fitness) {
     extern __shared__ float shared[];
-    //populationULT(tree, row) population[tree * num_rows + row] 
-    float res = pow(dev_population[blockIdx.x * num_rows + threadIdx.x] - dev_target_values[threadIdx.x], 2);
-    //shared[threadIdx.x] = pow(dev_population[blockIdx.x * num_rows + threadIdx.x] - dev_target_values[threadIdx.x], 2);
-    shared[threadIdx.x] = res;
-    //dev_population[blockIdx.x * num_rows + threadIdx.x] = res;//pode tirar-se
-    __syncthreads();
-    int j = num_rows;
+    shared[threadIdx.x] = pow(dev_population[blockIdx.x * blockDim.x + threadIdx.x] - dev_target_values[threadIdx.x], 2);
+    int j = blockDim.x;
     int i = j/2;
-    //int j = i%2;
     while (i != 0) {
+        __syncthreads();
         if (threadIdx.x < i) {
             shared[threadIdx.x] += shared[threadIdx.x + i];
-            //dev_population[blockIdx.x * num_rows + threadIdx.x] += shared[blockIdx.x * num_rows + threadIdx.x + i];//pode tirar-se
         }
         if (threadIdx.x == 0 && j % 2 != 0) {
             shared[threadIdx.x] += shared[i * 2];
-            //dev_population[blockIdx.x * num_rows + threadIdx.x] += dev_population[blockIdx.x * num_rows + (i*2)];
         }
-        __syncthreads();
         j = i;
         i /= 2;
-        //j = i % 2;
     }
-
     if(threadIdx.x == 0) {
-        dev_fitness[blockIdx.x] = shared[threadIdx.x] / num_rows;
-        //dev_fitness[blockIdx.x] = dev_population[blockIdx.x * num_rows + threadIdx.x] / num_rows;
+        dev_fitness[blockIdx.x] = shared[threadIdx.x] / blockDim.x;
     }
 }
 
@@ -254,7 +243,7 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
         printf("\n");
     }*/
 
-    gpu_calc_init_fitness<<<NUM_TREES, num_rows, sizeof(float) * num_rows>>>(dev_population, dev_target_values, num_rows, dev_fitness);
+    gpu_calc_init_fitness<<<NUM_TREES, num_rows, sizeof(float) * num_rows>>>(dev_population, dev_target_values, dev_fitness);
     cudaMemcpy(population, dev_population, population_size, cudaMemcpyDeviceToHost);
     cudaMemcpy(gpu_fitness, dev_fitness, NUM_TREES*sizeof(float), cudaMemcpyDeviceToHost);
 
