@@ -12,7 +12,7 @@ extern "C" {
     #include "../include/dataset_parser.h"
 }
 
-#define NUM_TREES 2
+#define NUM_TREES 256
 #define NUM_GENERATIONS 2
 /*#define NUM_TREES 4000
 #define NUM_GENERATIONS 3000*/
@@ -134,6 +134,65 @@ __global__ void gpu_generations(int *dev_matrix_gen, float *dev_old_fitness, flo
     }
 }
 
+__global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_old_fitness, float *dev_new_fitness) {
+    extern __shared__ float shared[];
+    int *index_fitness = (int*)&shared[0];
+    float *values_fitness = (float*)&shared[blockDim.x];
+    int index_fitness_global = gridDim.x * blockDim.x + threadIdx.x;
+    //shared[threadIdx.x] = dev_old_fitness[threadIdx.x];
+    if (gen == 0) {
+        dev_matrix_gen[threadIdx.x] = threadIdx.x; //0 * NUM_TREES + threadIdx.x = threadIdx.x
+    } else {
+        if(gen % 2 == 0) {
+            int index_shared_mem = (threadIdx.x / 2) + ((blockDim.x/2) * (threadIdx.x%2));
+            /*int *index_even = (int*)&index_fitness[0];
+            int *index_odd = (int*)&index_fitness[blockDim.x/2];
+            int *values_even = (float*)&values_fitness[0];
+            int *values_odd = (float*)&values_fitness[blockDim.x/2];*/
+            index_fitness[index_shared_mem] = index_fitness_global;
+            values_fitness[index_shared_mem] = dev_old_fitness[index_fitness_global];
+            //gridDim.x * blockDim.x + threadIdx.x//aceder matrix_gen
+            fitness_values[threadIdx.x] = dev_old_fitness[gridDim.x * blockDim.x + threadIdx.x];
+            index[threadIdx.x] = gridDim.x * blockDim.x + threadIdx.x;
+        } else {
+
+        }
+    }
+    
+    
+    int min_fitness_index = 0;
+    //for(int gen = 1; gen < NUM_GENERATIONS; gen++) {
+        //__syncthreads();
+        if (gen % 2 == 0) {
+            min_fitness_index = threadIdx.x % 2;
+            for(int i = min_fitness_index + 2; i < NUM_TREES; i += 2) {
+                min_fitness_index = (dev_old_fitness[min_fitness_index] < dev_old_fitness[i] ? min_fitness_index : i);
+            }
+            dev_matrix_gen[gen * NUM_TREES + threadIdx.x] = min_fitness_index;
+        } else {
+            int boundary = NUM_TREES / 2;
+            if (threadIdx.x < boundary) {
+                min_fitness_index = 0;
+                for(int i = min_fitness_index + 1; i < boundary; i++) {
+                    min_fitness_index = (dev_old_fitness[min_fitness_index] < dev_old_fitness[i] ? min_fitness_index : i);
+                }
+                dev_matrix_gen[gen * NUM_TREES + threadIdx.x] = min_fitness_index;
+            } else {
+                min_fitness_index = boundary;
+                for(int i = min_fitness_index + 1; i < NUM_TREES; i++) {
+                    min_fitness_index = (dev_old_fitness[min_fitness_index] < dev_old_fitness[i] ? min_fitness_index : i);
+                }
+                dev_matrix_gen[gen * NUM_TREES + threadIdx.x] = min_fitness_index;
+            }
+        }
+        //Calculate new fitness
+        //__syncthreads();
+        dev_new_fitness[threadIdx.x] = dev_old_fitness[threadIdx.x] + sigmoid(dev_old_fitness[min_fitness_index]);
+        //__syncthreads();
+        dev_old_fitness[threadIdx.x] = dev_new_fitness[threadIdx.x];
+    //}
+}
+
 
 __global__ void gpu_calc_init_fitness(float *dev_population, float *dev_target_values, int num_rows, float *dev_fitness) {
     extern __shared__ float shared[];
@@ -210,6 +269,17 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
         printf("%f , ", gpu_fitness[i]);
     }
     printf("\n");*/
+    for(int i = 0; i < NUM_TREES; i++) {
+
+    }
+
+    int num_blocks = NUM_TREES / 32;
+    int num_threads_in_block = 32;
+    int shared_memory_size = (sizeof(float) * num_threads_in_block) + (sizeof(int) * num_threads_in_block);
+    for(int gen = 1; gen < NUM_GENERATIONS; gen++){
+        gpu_generations_second<<<num_blocks,num_threads_in_block,shared_memory_size>>>(gen, dev_matrix_gen, dev_old_fitness, dev_new_fitness);
+    }
+
     int *dev_matrix_gen;
     cudaMalloc(&dev_matrix_gen, matrix_gen_size);
     gpu_generations<<<1, NUM_TREES>>>(dev_matrix_gen, dev_fitness, dev_new_fitness);
