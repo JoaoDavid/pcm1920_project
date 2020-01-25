@@ -136,27 +136,36 @@ __global__ void gpu_generations(int *dev_matrix_gen, float *dev_old_fitness, flo
 
 __global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_old_fitness, float *dev_new_fitness) {
     extern __shared__ float shared[];
-    int *index_fitness = (int*)&shared[0];
-    float *values_fitness = (float*)&shared[blockDim.x];
-    int index_fitness_global = gridDim.x * blockDim.x + threadIdx.x;
-    //shared[threadIdx.x] = dev_old_fitness[threadIdx.x];
+    int* index_fitness = (int*)&shared[0];
+    float* values_fitness = (float*)&shared[blockDim.x];
+    int index_fitness_global = blockDim.x * blockIdx.x + threadIdx.x;
+    int index_matrix_global = gen * gridDim.x * blockDim.x + index_fitness_global;
+
     if (gen == 0) {
-        dev_matrix_gen[threadIdx.x] = threadIdx.x; //0 * NUM_TREES + threadIdx.x = threadIdx.x
+        dev_matrix_gen[index_matrix_global] = threadIdx.x;
     } else {
         if(gen % 2 == 0) {
             int index_shared_mem = (threadIdx.x / 2) + ((blockDim.x/2) * (threadIdx.x%2));
-            /*int *index_even = (int*)&index_fitness[0];
-            int *index_odd = (int*)&index_fitness[blockDim.x/2];
-            int *values_even = (float*)&values_fitness[0];
-            int *values_odd = (float*)&values_fitness[blockDim.x/2];*/
             index_fitness[index_shared_mem] = index_fitness_global;
             values_fitness[index_shared_mem] = dev_old_fitness[index_fitness_global];
-            //gridDim.x * blockDim.x + threadIdx.x//aceder matrix_gen
-            fitness_values[threadIdx.x] = dev_old_fitness[gridDim.x * blockDim.x + threadIdx.x];
-            index[threadIdx.x] = gridDim.x * blockDim.x + threadIdx.x;
+            int i = blockDim.x / 2;
+            while (i != 2) {
+                if (threadIdx.x < i) {
+                   int best_fitness_index = (values_fitness[threadIdx.x] < values_fitness[threadIdx.x+i] ? threadIdx.x : threadIdx.x+i);
+                   index_fitness[threadIdx.x] = best_fitness_index;
+                   values_fitness[threadIdx.x] = values_fitness[best_fitness_index];
+                }
+                __syncthreads();
+                i /= 2;
+            }
+            if (threadIdx.x < 2) {
+                dev_matrix_gen[index_matrix_global] = index_fitness[threadIdx.x];
+                dev_new_fitness[index_fitness_global] = values_fitness[threadIdx.x];
+            }
         } else {
 
         }
+        
     }
     
     
@@ -269,20 +278,18 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
         printf("%f , ", gpu_fitness[i]);
     }
     printf("\n");*/
-    for(int i = 0; i < NUM_TREES; i++) {
-
-    }
+    int *dev_matrix_gen;
+    cudaMalloc(&dev_matrix_gen, matrix_gen_size);
 
     int num_blocks = NUM_TREES / 32;
     int num_threads_in_block = 32;
     int shared_memory_size = (sizeof(float) * num_threads_in_block) + (sizeof(int) * num_threads_in_block);
     for(int gen = 1; gen < NUM_GENERATIONS; gen++){
-        gpu_generations_second<<<num_blocks,num_threads_in_block,shared_memory_size>>>(gen, dev_matrix_gen, dev_old_fitness, dev_new_fitness);
+        gpu_generations_second<<<num_blocks,num_threads_in_block,shared_memory_size>>>(gen, dev_matrix_gen, dev_fitness, dev_new_fitness);
     }
 
-    int *dev_matrix_gen;
-    cudaMalloc(&dev_matrix_gen, matrix_gen_size);
-    gpu_generations<<<1, NUM_TREES>>>(dev_matrix_gen, dev_fitness, dev_new_fitness);
+    
+    //gpu_generations<<<1, NUM_TREES>>>(dev_matrix_gen, dev_fitness, dev_new_fitness);
     cudaMemcpy(matrix_gen, dev_matrix_gen, matrix_gen_size, cudaMemcpyDeviceToHost);
     cudaMemcpy(gpu_fitness, dev_new_fitness, NUM_TREES*sizeof(float), cudaMemcpyDeviceToHost);
 
@@ -301,7 +308,7 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
 void cpu_seq_version(float *population, float *target_values, int *cpu_matrix_gen, float *old_fitness, int num_rows) {
     //float *old_fitness = (float*) malloc(NUM_TREES * sizeof(float));
     float *new_fitness = (float*) malloc(NUM_TREES * sizeof(float));
-    float *aux;
+    //float *aux;
 
     for(int i = 0; i < NUM_TREES; i++) {
         float curr = 0;
