@@ -136,7 +136,7 @@ __global__ void gpu_generations(int *dev_matrix_gen, float *dev_old_fitness, flo
 
 
 
-__global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_old_fitness, float *dev_new_fitness) {
+__global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_old_fitness, float *dev_new_fitness, float *dev_fitness_aux, int *dev_fitness_index_aux) {
     extern __shared__ float shared[];
     int* index_fitness = (int*)&shared[0];
     float* values_fitness = (float*)&shared[blockDim.x];
@@ -147,7 +147,7 @@ __global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_
         dev_matrix_gen[index_matrix_global] = index_matrix_global;
     } else {
         if(gen % 2 == 0) {
-            int index_shared_mem = (threadIdx.x / 2) + ((blockDim.x/2) * (threadIdx.x%2));//certo
+            //int index_shared_mem = (threadIdx.x / 2) + ((blockDim.x/2) * (threadIdx.x%2));//certo
             /*index_fitness[index_shared_mem] = index_fitness_global;
             values_fitness[index_shared_mem] = dev_old_fitness[index_fitness_global];*/
             index_fitness[threadIdx.x] = index_fitness_global;
@@ -187,11 +187,42 @@ __global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_
             }
             __syncthreads();
             if (threadIdx.x == 0) {
-                dev_matrix_gen[index_matrix_global] = index_fitness[threadIdx.x];
-                dev_new_fitness[index_fitness_global] = values_fitness[threadIdx.x];
+                dev_matrix_gen[index_matrix_global] = index_fitness[threadIdx.x];//remover mais tarde
+                dev_new_fitness[index_fitness_global] = values_fitness[threadIdx.x];//remover mais tarde
+                dev_fitness_aux[blockIdx.x] = values_fitness[threadIdx.x];
+                dev_fitness_index_aux[blockIdx.x] = index_fitness[threadIdx.x];
             }
         }
         
+    }
+}
+
+__global__ void gpu_generations_third(int gen, int *dev_matrix_gen, float *dev_old_fitness, float *dev_new_fitness, float *dev_fitness_aux, int *dev_fitness_index_aux) {
+    extern __shared__ float shared[];
+    int* index_fitness = (int*)&shared[0];
+    float* values_fitness = (float*)&shared[blockDim.x];
+    int index_fitness_global = blockDim.x * blockIdx.x + threadIdx.x; //certo
+    int index_matrix_global = gen * gridDim.x * blockDim.x + index_fitness_global;//certo
+    int min_fitness_index = 0;
+
+    if (gen == 0) {
+        dev_matrix_gen[index_matrix_global] = index_matrix_global;
+    } else {
+        int boundary = gridDim.x / 2;
+        if (blockIdx.x < boundary) {
+            min_fitness_index = 0;
+            for(int i = min_fitness_index + 1; i < boundary; i++) {
+                min_fitness_index = (dev_fitness_aux[min_fitness_index] < dev_fitness_aux[i] ? min_fitness_index : i);
+            }
+            dev_matrix_gen[index_matrix_global] = dev_fitness_index_aux[min_fitness_index];
+        } else {
+            min_fitness_index = boundary;
+            for(int i = min_fitness_index + 1; i < gridDim.x; i++) {
+                min_fitness_index = (dev_fitness_aux[min_fitness_index] < dev_fitness_aux[i] ? min_fitness_index : i);
+            }
+            dev_matrix_gen[index_matrix_global] = dev_fitness_index_aux[min_fitness_index];
+
+        }
     }
 }
 
@@ -228,6 +259,7 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
     
     float *dev_fitness;
     cudaMalloc(&dev_fitness, NUM_TREES * sizeof(float));
+    
 
     float *new_fitness = (float*) malloc(NUM_TREES * sizeof(float));
     float *dev_new_fitness;
@@ -274,9 +306,18 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
 
     
     int num_blocks = NUM_TREES / num_threads_in_block;    
+    float *dev_fitness_aux;
+    cudaMalloc(&dev_fitness_aux, num_blocks * sizeof(float));
+    int *dev_fitness_index_aux;
+    cudaMalloc(&dev_fitness_index_aux, num_blocks * sizeof(int));
+
     int shared_memory_size = (sizeof(float) * num_threads_in_block) + (sizeof(int) * num_threads_in_block);
-    for(int gen = 0; gen < NUM_GENERATIONS; gen++){
-        gpu_generations_second<<<num_blocks,num_threads_in_block,shared_memory_size>>>(gen, dev_matrix_gen, dev_fitness, dev_new_fitness);
+
+    gpu_generations_second<<<num_blocks,num_threads_in_block,shared_memory_size>>>(0, dev_matrix_gen, dev_fitness, dev_new_fitness, dev_fitness_aux, dev_fitness_index_aux);
+    for(int gen = 1; gen < NUM_GENERATIONS; gen++){
+        gpu_generations_second<<<num_blocks,num_threads_in_block,shared_memory_size>>>(gen, dev_matrix_gen, dev_fitness, dev_new_fitness, dev_fitness_aux, dev_fitness_index_aux);
+        gpu_generations_third<<<num_blocks,num_threads_in_block,shared_memory_size>>>(gen, dev_matrix_gen, dev_fitness, dev_new_fitness, dev_fitness_aux, dev_fitness_index_aux);
+
     }
 
     
@@ -318,7 +359,7 @@ void cpu_seq_version(float *population, float *target_values, int *cpu_matrix_ge
         cpu_matrix_gen[i] = i;
     }
     for(int gen = 1; gen < NUM_GENERATIONS; gen++) {
-        if (gen % 2 != 0) {
+        if (gen % 2 == 0) {
             int min_fitness_index_even = 0;
             int min_fitness_index_odd = 1;
             for(int i = 2; i < NUM_TREES; i++) {
