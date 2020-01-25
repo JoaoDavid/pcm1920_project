@@ -5,8 +5,11 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{mathtools}
+\usepackage{array}
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
+\usepackage{graphicx}
+\graphicspath{{./}}
 
 \begin{document}
 
@@ -132,13 +135,44 @@ To store and calculate the values, a set number of random syntax trees have to b
 \end{itemize}
 
 \subsection{GPU Parallelization}
+After all the values are calculated and stored in the array, we then proceed to the computation of the fitness for all trees on the first generation. In Figure~\ref{fitness_calc} we present an example of fitness calculation with a data set of 4 lines, meaning that each tree computes 4 different values which are compared to the 4 target values to determine the MSE and consequently the fitness of the tree. Each tree is processed by a block (an abstract representation of a group of executing threads) which will have its own ID that can be extracted with the built in keyword \textit{blockIdx.x}. The \textit{.x} termination means we are extracting the ID along the \textit{x} axis, since the kernel is launched in 1 dimension, both the \textit{y} and \textit{z} values are 0.
+
+$V_{i,j}$ is the value calculated by a tree of ID \textit{i} on line \textit{j} of the data set and $T_{j}$ the respective target value. Each $(V_{i,j} - T_{j})^{2}$ value is calculated by a single thread which is able to compute the correct index on the array by calculating its position relative to its own ID (\textit{threadIdx.x}) and the block's ID in the following manner: array[$(blockIdx.x * num\_rows) + threadIdx.x$].
+
+After all values are calculated we then proceed to a reduction phase, in this phase the amount of threads working on adding up all the values is reduced by half with each step until it reaches 1, which will be the final value to be divided by \texttt{num\_rows} which will equal to the MSE of the computed value and the target value i.e. the fitness of the tree. Since all blocks work in parallel, the complexity of the reduction algorithm is $O(log(n))$.
 
 
-
+\begin{figure}[!htb]
+\begin{center}
+\includegraphics[scale=0.35]{Fitness_Calculation1}
+\end{center}
+\caption{Fitness computation for a data set of 4 lines}
+\label{fitness_calc}
+\end{figure}
 
 \section{Evaluation}
 
 \subsection{Experimental Setup}
+
+\begin{center}
+ \begin{tabular}{|>{\centering\arraybackslash}p{4cm}|>{\centering\arraybackslash}p{2cm}|>{\centering\arraybackslash}p{2cm}|>{\centering\arraybackslash}p{2cm}|} 
+ \hline
+ Processor & CPU Cores & Threads & RAM \\ [0.5ex] 
+ \hline\hline
+ Intel Xeon X5670 & 12 & 24 & 24GB \\
+ \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|>{\centering\arraybackslash}p{4cm}|>{\centering\arraybackslash}p{2cm}|>{\centering\arraybackslash}p{2cm}|>{\centering\arraybackslash}p{2cm}|}
+ \hline
+ Graphics Card & GPU Cores & Threads & Memory \\ [0.5ex] 
+ \hline\hline
+ Intel Xeon X5670 & 1024 & 24 & 4GB\\  
+ \hline
+\end{tabular}
+\end{center}
 
 In this section you should describe the machine(s) in which you are going to evaluate your system. Select the information that is relevant.
 
@@ -151,16 +185,12 @@ You should include (ideally vectorial) plots, with a descriptive caption. Make s
 
 \subsection{Discussion}
 
-Here you should discuss the results on a high level. For instance, based on our results, the parallelization of the merge-sort is relevant as no other parallel work occurs at the same time, and the complexity $O(N log(N))$ can have a large impact when the number of individuals is high.
+Here you should discuss the results on a high level. For instance, based on our results, the parallelization of the merge-sort is relevant as no other parallel work occurs at the same time, and the complexity $O(Nlog(N))$ can have a large impact when the number of individuals is high.
 
 \section{Related Work}
 
-This section can be either the second one, or the second-to-last. In the case where knowledge of other competing works is required, it could come before. But if you are confident on what you did, it should appear at the end, where you can compare existing works against yours. An example is below:
+Alberto Moraglio, Krzysztof Krawiec, and Colin G. Johnson introduced a new way of genetic programming, Geometric Semantic Genetic Programming (GSGP) which consists in changing the semantics of the functions directly. Their work in regards to fitness evaluation, tree mutation and crossover is far more complex given that we only accounted for mutation by concatenation with sums of trees. However the implementation of the genetic algorithm was done on CPU which makes performance considerably slower if it were implemented on GPU.
 
-Chu and Beasley proposed a Genetic Algorithm for the Multidimensional Knapsack Problem \cite{DBLP:journals/heuristics/ChuB98}. This work introduces a heuristic as a repair operator. Our work makes no optimization with regards to the problem domain, making it more generic and supporting other problems.
-
-
-When using BibTeX references, I suggest using DBLP\footnote{\url{https://dblp.org}}, leaving Google Scholar as a backup, since DBLP has more correct and detailed information about research papers.
 
 \section{Conclusions}
 

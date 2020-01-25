@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.19)  25 JAN 2020 14:06
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.19)  25 JAN 2020 17:14
 entering extended mode
 **./samplepaper.tex
 (samplepaper.tex
@@ -567,6 +567,16 @@ LaTeX Info: Thecontrolsequence`\]'isalreadyrobust on input line 129.
 \l_MT_above_shortintertext_sep=\dimen270
 \l_MT_below_shortintertext_sep=\dimen271
 )
+("C:\Program Files\MiKTeX 2.9\tex/latex/tools\array.sty"
+Package: array 2019/08/31 v2.4l Tabular extension package (FMi)
+\col@sep=\dimen272
+\ar@mcellbox=\box69
+\extrarowheight=\dimen273
+\NC@list=\toks39
+\extratabsurround=\skip52
+\backup@length=\skip53
+\ar@cellbox=\box70
+)
 ("C:\Program Files\MiKTeX 2.9\tex/latex/algorithms\algorithm.sty"
 Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
 nment
@@ -574,15 +584,15 @@ nment
 ("C:\Program Files\MiKTeX 2.9\tex/latex/float\float.sty"
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
 \c@float@type=\count158
-\float@exts=\toks39
-\float@box=\box69
-\@float@everytoks=\toks40
-\@floatcapt=\box70
+\float@exts=\toks40
+\float@box=\box71
+\@float@everytoks=\toks41
+\@floatcapt=\box72
 )
 ("C:\Program Files\MiKTeX 2.9\tex/latex/base\ifthen.sty"
 Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
 )
-\@float@every@algorithm=\toks41
+\@float@every@algorithm=\toks42
 \c@algorithm=\count159
 )
 ("C:\Program Files\MiKTeX 2.9\tex/latex/algorithmicx\algpseudocode.sty"
@@ -595,44 +605,44 @@ Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
 \c@ALG@line=\count160
 \c@ALG@rem=\count161
 \c@ALG@nested=\count162
-\ALG@tlm=\skip52
-\ALG@thistlm=\skip53
+\ALG@tlm=\skip54
+\ALG@thistlm=\skip55
 \c@ALG@Lnr=\count163
 \c@ALG@blocknr=\count164
 \c@ALG@storecount=\count165
 \c@ALG@tmpcounter=\count166
-\ALG@tmplength=\skip54
+\ALG@tmplength=\skip56
 )
 Document Style - pseudocode environments for use with the `algorithmicx' style
 ) (samplepaper.aux)
 \openout1 = `samplepaper.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 11.
-LaTeX Font Info:    ... okay on input line 11.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 11.
-LaTeX Font Info:    ... okay on input line 11.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 11.
-LaTeX Font Info:    ... okay on input line 11.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 11.
-LaTeX Font Info:    ... okay on input line 11.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 11.
-LaTeX Font Info:    ... okay on input line 11.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 11.
-LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
  ABD: EveryShipout initializing macros
 ("C:\Program Files\MiKTeX 2.9\tex/context/base/mkii\supp-pdf.mkii"
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count167
-\scratchdimen=\dimen272
-\scratchbox=\box71
+\scratchdimen=\dimen274
+\scratchbox=\box73
 \nofMPsegments=\count168
 \nofMParguments=\count169
-\everyMPshowfont=\toks42
+\everyMPshowfont=\toks43
 \MPscratchCnt=\count170
-\MPscratchDim=\dimen273
+\MPscratchDim=\dimen275
 \MPnumerator=\count171
 \makeMPintoPDFobject=\count172
-\everyMPtoPDFconversion=\toks43
+\everyMPtoPDFconversion=\toks44
 ) ("C:\Program Files\MiKTeX 2.9\tex/latex/epstopdf-pkg\epstopdf-base.sty"
 Package: epstopdf-base 2019-12-09 v2.10 Base part for package epstopdf
 
@@ -678,40 +688,42 @@ G,.JBIG2,.JB2,.eps]
 (grfext)             \AppendGraphicsExtensions on input line 504.
 )
 LaTeX Font Info:    Trying to load font information for OMS+cmtt on input line 
-23.
-LaTeX Font Info:    No file OMScmtt.fd. on input line 23.
+26.
+LaTeX Font Info:    No file OMScmtt.fd. on input line 26.
 
 
 LaTeX Font Warning: Font shape `OMS/cmtt/m/n' undefined
 (Font)              using `OMS/cmsy/m/n' instead
-(Font)              for symbol `textbraceleft' on input line 23.
+(Font)              for symbol `textbraceleft' on input line 26.
 
-LaTeX Font Info:    Trying to load font information for OMS+cmr on input line 2
-8.
+LaTeX Font Info:    Trying to load font information for OMS+cmr on input line 3
+1.
 ("C:\Program Files\MiKTeX 2.9\tex/latex/base\omscmr.fd"
 File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 28.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 31.
  [1
 
-{C:/Users/Ye Yang/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}] [2] [3]
+{C:/Users/Ye Yang/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}] [2] [3] [
+4]
+<Fitness_Calculation1.png, id=35, 685.56125pt x 777.90625pt>
+File: Fitness_Calculation1.png Graphic file (type png)
+<use Fitness_Calculation1.png>
+Package pdftex.def Info: Fitness_Calculation1.png  used on input line 147.
+(pdftex.def)             Requested size: 239.95003pt x 272.27126pt.
+ [5 <./Fitness_Calculation1.png>]
 
-LaTeX Warning: Reference `fig1' on page 4 undefined on input line 150.
-
-[4]
-
-LaTeX Warning: Citation `DBLP:journals/heuristics/ChuB98' on page 5 undefined o
-n input line 160.
+LaTeX Warning: Reference `fig1' on page 6 undefined on input line 184.
 
 
-Overfull \hbox (4.04149pt too wide) in paragraph at lines 163--164
-[]\OT1/cmr/m/n/10 When us-ing Bib-TeX ref-er-ences, I sug-gest us-ing DBLP[], l
-eav-ing Google Scholar
+Overfull \hbox (1.07155pt too wide) in paragraph at lines 192--193
+\OT1/cmr/m/n/10 way of ge-netic pro-gram-ming, Ge-o-met-ric Se-man-tic Ge-netic
+ Pro-gram-ming (GSGP)
  []
 
 No file samplepaper.bbl.
-[5] (samplepaper.aux)
+[6] (samplepaper.aux)
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
@@ -720,10 +732,10 @@ LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 14448 strings out of 492483
- 278908 string characters out of 3131030
- 340725 words of memory out of 3000000
- 18498 multiletter control sequences out of 15000+200000
+ 14509 strings out of 492483
+ 279709 string characters out of 3131030
+ 341575 words of memory out of 3000000
+ 18556 multiletter control sequences out of 15000+200000
  10220 words of font info for 37 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
  60i,12n,60p,931b,1040s stack positions out of 5000i,500n,10000p,200000b,50000s
@@ -744,9 +756,9 @@ public/amsfonts/cm/cmti10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/a
 msfonts/cm/cmti9.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/c
 m/cmtt10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt9.
 pfb>
-Output written on samplepaper.pdf (5 pages, 225321 bytes).
+Output written on samplepaper.pdf (6 pages, 247514 bytes).
 PDF statistics:
- 93 PDF objects out of 1000 (max. 8388607)
+ 99 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 13 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 18 words of extra memory for PDF output out of 10000 (max. 10000000)
 
