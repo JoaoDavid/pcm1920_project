@@ -134,6 +134,8 @@ __global__ void gpu_generations(int *dev_matrix_gen, float *dev_old_fitness, flo
     }
 }
 
+
+
 __global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_old_fitness, float *dev_new_fitness) {
     extern __shared__ float shared[];
     int* index_fitness = (int*)&shared[0];
@@ -202,20 +204,22 @@ __global__ void gpu_calc_init_fitness(float *dev_population, float *dev_target_v
     shared[threadIdx.x] = res;
     //dev_population[blockIdx.x * num_rows + threadIdx.x] = res;//pode tirar-se
     __syncthreads();
-    int i = num_rows/2;
-    int j = num_rows%2;
+    int j = num_rows;
+    int i = j/2;
+    //int j = i%2;
     while (i != 0) {
         if (threadIdx.x < i) {
             shared[threadIdx.x] += shared[threadIdx.x + i];
             //dev_population[blockIdx.x * num_rows + threadIdx.x] += shared[blockIdx.x * num_rows + threadIdx.x + i];//pode tirar-se
         }
-        if (j != 0 && threadIdx.x == 0) {
+        if (threadIdx.x == 0 && j % 2 != 0) {
             shared[threadIdx.x] += shared[i * 2];
             //dev_population[blockIdx.x * num_rows + threadIdx.x] += dev_population[blockIdx.x * num_rows + (i*2)];
         }
         __syncthreads();
+        j = i;
         i /= 2;
-        j = i % 2;
+        //j = i % 2;
     }
 
     if(threadIdx.x == 0) {
@@ -315,11 +319,11 @@ void cpu_seq_version(float *population, float *target_values, int *cpu_matrix_ge
         }
         old_fitness[i] = curr / num_rows;
     }
-    /*printf("---------- first fitness cpu ----------\n");
+    printf("---------- first fitness cpu ----------\n");
     for(int i = 0; i < NUM_TREES; i++) {
         printf("%f , ", old_fitness[i]);
     }
-    printf("\n");*/
+    printf("\n");
     // second part of the algorithm
     for(int i = 0; i < NUM_TREES; i++) { //gen = 0
         cpu_matrix_gen[i] = i;
