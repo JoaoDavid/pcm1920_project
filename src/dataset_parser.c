@@ -32,7 +32,7 @@ int parse_file_columns(char* filename){
     return num_columns;
 }
 
-void parse_file_data(char* filename, double* dataset, double* target_values, int num_columns, int num_rows){
+void parse_file_data(char* filename, float* dataset, float* target_values, int num_columns, int num_rows){
     int bufferLength = 15000;
     char line[bufferLength];
     FILE* file = fopen(filename,"r");

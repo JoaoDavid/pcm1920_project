@@ -12,7 +12,7 @@ struct stack_t* create_stack() {
     return stack;
 }
 
-void push(struct stack_t* stack, double value) {
+void push(struct stack_t* stack, float value) {
     struct stack_node_t* stack_node = (struct stack_node_t*)malloc(sizeof(struct stack_node_t));
     stack_node -> next = stack->head;
     stack_node -> value = value;
@@ -20,12 +20,12 @@ void push(struct stack_t* stack, double value) {
     stack->size++;
 }
 
-double pop(struct stack_t* stack) {
+float pop(struct stack_t* stack) {
     if (isEmpty(stack) != 1) {
         struct stack_node_t* stack_node = stack->head;
         stack->head = stack_node->next;
         stack->size--;
-        double res = stack_node->value;
+        float res = stack_node->value;
         //printf("value to be pooped %lf\n", res);
         free(stack_node);
         return res;
@@ -35,7 +35,7 @@ double pop(struct stack_t* stack) {
     }
 }
 
-double peek(struct stack_t* stack) {
+float peek(struct stack_t* stack) {
     if (isEmpty(stack) != 1) {
         return stack->head->value;
     }

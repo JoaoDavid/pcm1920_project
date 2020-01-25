@@ -7,17 +7,17 @@ struct stack_t {
 }; 
 
 struct stack_node_t { 
-    double value;
+    float value;
     struct stack_node_t *next;    
 };
 
 struct stack_t* create_stack();
 
-void push(struct stack_t* stack, double value);
+void push(struct stack_t* stack, float value);
 
-double pop(struct stack_t* stack);
+float pop(struct stack_t* stack);
 
-double peek(struct stack_t* stack);
+float peek(struct stack_t* stack);
 
 int isEmpty(struct stack_t* stack);
 
