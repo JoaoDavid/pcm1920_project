@@ -26,7 +26,7 @@ Ye Yang\inst{1}
 \maketitle
 
 \begin{abstract}
-Semantic Genetic programming aims to not only syntatically manipulate the data to promote a better fitness test, but also ensuring that the resulting function is semantically correct. Traditional implementations of genetic programs have always been done on CPU, taking advantage of its multiple cores to do parallel work. We aim to improve on the parallelization of the algorithm by implementing on the Graphics Processing Unit (GPU), taking advantage of its vast amount of processing cores, which are multiple times that of the CPU. The implementation will be done on an NVidia GPU which allows us to use the supported Compute Unified Device Architecture (CUDA) API, which allows us to directly manipulate the GPU memory and threads necessary to perform fitness tests and crossover.
+Semantic Genetic programming aims to not only syntactically manipulate the data to promote a better fitness evaluation, but also ensuring that the resulting function is semantically correct. Traditional implementations of genetic programs have always been done on CPU, taking advantage of its multiple cores to do parallel work. We aim to improve on the parallelization of the genetic algorithm by implementing it on the Graphics Processing Unit (GPU), taking advantage of its vast amount of processing cores, which are multiple times that of the CPU. The implementation will be done on an NVidia GPU allowing the use of the Compute Unified Device Architecture (CUDA) API, which grants us access to directly manipulate the GPU memory and threads necessary to perform fitness evaluation and crossover.
 
 \keywords{Semantic Genetic programming  \and GPU \and CUDA.}
 \end{abstract}
@@ -35,19 +35,19 @@ Semantic Genetic programming aims to not only syntatically manipulate the data t
 %
 \section{Introduction}
 
+Traditional implementations of Semantic Genetic programming are  on CPU, usually with syntax trees that contain elements of the domain in study, whether it be logical operations, mathematical operations, among others.
 
-The introduction should set the context for your project. Why is this topic relevant?
+These trees are then processed given some input, and the output is compared to some target value to calculate its fitness. Fitness calculation algorithms are generally implemented on CPU, in this paper we aim to vastly improve the time required computing and evaluating fitness values by implementing an algorithm on GPU, taking advantage of its many cores and threads which allows for a vast amount of parallel computation to be done, when compared to a CPU.
 
-You should also define the scope of your project. You could design a software artifact that would end poverty and famine, but that is not realistic.
+While modern CPU's number of cores and threads round either the single or double digits, a GPU contains thousands of both of them. This paired with quick access, cache like, shared memory we can vastly improve execution times given large data set inputs.
 
-For example, this document describes the structure your paper should have. Despite using the LNCS LaTeX template \footnote{LNCS is the official template for Europar 2019, in case you are interested.}, the formatting template is not relevant, only the content structure is relevant.
+In section 2 we explain some of the main concepts needed to understand the parallel implementation of fitness testing, in section 3 we discuss the general approach taken to parallelize fitness evaluation, which can be applied to any programming. In section 4 we explain in more detail our implementation which is written in C++ with a CUDA extension, allowing us to fully utilize all the functionality provided by the API. In section 5 we compare test results from both a parallel and sequential implementation of the fitness evaluation algorithm. In section 6 we discuss previous work done on the subject matter and compare it with our own implementation and finally we summarize all the findings in the paper and future work to be done in section 7.
 
-Finally, you should define the goals of your project. For instance,
-
+With this paper we aim to:
 \begin{itemize}
-	\item To propose a method for the parallelization of Genetic Algorithms
-	\item An implementation of such algorithm
-	\item The experimental evaluation of such method, with comparison with a sequential alternative.
+	\item propose a parallel algorithm implemented on the GPU for fitness calculation and evaluation and genetic crossover
+	\item present an implementation of the algorithm in CUDA
+	\item compare execution times of the implemented algorithm with a sequential CPU version
 \end{itemize}
 
 
@@ -58,7 +58,7 @@ To understand the underlying principles of the implementation we first have to i
 	\item To start off the program, we must introduce an initial data set. The data set will be read as a text file, each line of the text file containing randomly generated values and a final target value. These random data set values are to be added to trees that contain variables, each variable having its own index to determine which random value to swap the variable by. After all the necessary swaps are made, the final value is computed for each line of the data set and the fitness of the syntax tree is determined by calculating the Mean Squared Error (MSE) between the calculated values (O) and the target values (T): $$\frac{1}{n}\sum_{i=1}^{n} (O_i - T_i)^{2}$$
 \end{itemize}
 
-The main parallelization applied to the algorithm is done by taking advantage of the much higher amount of threads on a GPU compared to a CPU. In order to better take advantage of all the computational power on the GPU we first have to copy all the data from CPU memory to GPU memory by allocating memory for the array using cudaMalloc(\texttt{t\_array,size}) and then copying the data currently residing on CPU memory to the newly GPU memory allocated array using cudaMemcpy(\texttt{o\_array,t\_array,size,cudaMemcpyHostToDevice}). The keyword cudaMemcpyHostToDevice signals that the array from which the contents are to be copied (\texttt{o\_array}) is residing in CPU memory and the target array to which the values are copied to (\texttt{t\_array}) is residing in the GPU memory. These are ncessary steps since neither the GPU nor the CPU have direct access to each other's memory region.
+The main parallelization applied to the algorithm is done by taking advantage of the much higher amount of threads on a GPU compared to a CPU. In order to better take advantage of all the computational power on the GPU we first have to copy all the data from CPU memory to GPU memory by allocating memory for the array using cudaMalloc(\texttt{t\_array,size}) and then copying the data currently residing on CPU memory to the newly GPU memory allocated array using cudaMemcpy(\texttt{o\_array,t\_array,size,cudaMemcpyHostToDevice}). The keyword cudaMemcpyHostToDevice signals that the array from which the contents are to be copied (\texttt{o\_array}) is residing in CPU memory and the target array to which the values are copied to (\texttt{t\_array}) is residing in the GPU memory. These are necessary steps since neither the GPU nor the CPU have direct access to each others memory region.
 
 \section{Approach}
 The main genetic algorithm to crossover different trees of computation takes into account the following variables:
@@ -127,7 +127,7 @@ Before any values could be first calculated, we needed some form of input to com
 
 To store and calculate the values, a set number of random syntax trees have to be initially generated. Each node of the tree as previously mentioned can be a literal value, a variable or a mathematical operator. After generating the trees, each one of them must be run through the data set to evaluate its fitness by calculating the mathematical operations defined and comparing it with the target values. The computation is handled as a Reverse Polish Notation calculator (RPN) according to the following procedures:
 \begin{itemize}
-	\item A seperate LIFO stack to store literal values and variables is created
+	\item A separate LIFO stack to store literal values and variables is created
 	\item The tree is traversed in postorder so that the root operation or value is read last
 	\item If either a literal or a variable are present, they are pushed into the stack
 	\item If a mathematical operation is read, 2 values are popped out of the stack for computing, and the resulting value is pushed back into the stack
@@ -135,7 +135,7 @@ To store and calculate the values, a set number of random syntax trees have to b
 \end{itemize}
 
 \subsection{GPU Parallelization}
-After all the values are calculated and stored in the array, we then proceed to the computation of the fitness for all trees on the first generation. In Figure~\ref{fitness_calc} we present an example of fitness calculation with a data set of 4 lines, meaning that each tree computes 4 different values which are compared to the 4 target values to determine the MSE and consequently the fitness of the tree. Each tree is processed by a block (an abstract representation of a group of executing threads) which will have its own ID that can be extracted with the built in keyword \textit{blockIdx.x}. The \textit{.x} termination means we are extracting the ID along the \textit{x} axis, since the kernel is launched in 1 dimension, both the \textit{y} and \textit{z} values are 0.
+After all the values are calculated and stored in the array, we then proceed to the computation of the fitness for all trees for the first generation. In Figure~\ref{fitness_calc} we present an example of fitness calculation with a data set of 4 lines, meaning that each tree computes 4 different values which are compared to the 4 target values to determine the MSE and consequently the fitness of the tree. Each tree is processed by a block (an abstract representation of a group of executing threads) which will have its own ID that can be extracted with the built in keyword \textit{blockIdx.x}. The \textit{.x} termination means we are extracting the ID along the \textit{x} axis, since the kernel is launched in 1 dimension, both the \textit{y} and \textit{z} values are 0.
 
 $V_{i,j}$ is the value calculated by a tree of ID \textit{i} on line \textit{j} of the data set and $T_{j}$ the respective target value. Each $(V_{i,j} - T_{j})^{2}$ value is calculated by a single thread which is able to compute the correct index on the array by calculating its position relative to its own ID (\textit{threadIdx.x}) and the block's ID in the following manner: array[$(blockIdx.x * num\_rows) + threadIdx.x$].
 
