@@ -146,7 +146,7 @@ __global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_
     if (gen == 0) {
         dev_matrix_gen[index_matrix_global] = index_matrix_global;
     } else {
-        if(gen % 2 == 0) {
+        if(gen % 2 != 0) {
             //int index_shared_mem = (threadIdx.x / 2) + ((blockDim.x/2) * (threadIdx.x%2));//certo
             /*index_fitness[index_shared_mem] = index_fitness_global;
             values_fitness[index_shared_mem] = dev_old_fitness[index_fitness_global];*/
@@ -154,7 +154,7 @@ __global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_
             values_fitness[threadIdx.x] = dev_old_fitness[index_fitness_global];
             __syncthreads();
             int i = blockDim.x / 2;
-            while (i != 2) {
+            while (i != 0) {
                 if (threadIdx.x < i) {
                     if (values_fitness[threadIdx.x] > values_fitness[threadIdx.x + i]) {
                         values_fitness[threadIdx.x] = values_fitness[threadIdx.x + i];
@@ -205,8 +205,16 @@ __global__ void gpu_generations_third(int gen, int *dev_matrix_gen, float *dev_o
     int index_matrix_global = gen * gridDim.x * blockDim.x + index_fitness_global;//certo
     int min_fitness_index = 0;
 
-    if (gen == 0) {
-        dev_matrix_gen[index_matrix_global] = index_matrix_global;
+    if (gen % 2 != 0) {
+        min_fitness_index = index_fitness_global % 2;
+        for(int i = min_fitness_index + 2; i < gridDim.x; i++) {
+            min_fitness_index = (dev_fitness_aux[min_fitness_index] < dev_fitness_aux[i] ? min_fitness_index : i);
+        }
+        //dev_matrix_gen[index_matrix_global] = dev_fitness_index_aux[min_fitness_index];
+
+        dev_new_fitness[index_fitness_global] = dev_old_fitness[index_fitness_global] + sigmoid(dev_old_fitness[index_fitness_global]);
+        __syncthreads();
+        dev_old_fitness[index_fitness_global] = dev_new_fitness[index_fitness_global];
     } else {
         int boundary = gridDim.x / 2;
         if (blockIdx.x < boundary) {
@@ -362,7 +370,7 @@ void cpu_seq_version(float *population, float *target_values, int *cpu_matrix_ge
         cpu_matrix_gen[i] = i;
     }
     for(int gen = 1; gen < NUM_GENERATIONS; gen++) {
-        if (gen % 2 == 0) {
+        if (gen % 2 != 0) {
             int min_fitness_index_even = 0;
             int min_fitness_index_odd = 1;
             for(int i = 2; i < NUM_TREES; i++) {
@@ -514,7 +522,7 @@ int main(int argc, char *argv[]) {
         node_destroy(trees[i]);
     }    
 
-    float espilon = 0.000001;
+    float espilon = 0.1;
     for(int i = 0; i < NUM_TREES; i++) {
         if (cpu_fitness[i] - gpu_fitness[i] >= espilon) {
             printf("cpu and gpu final fitness arrays are different, values %f ; %f - FAIL!\n",cpu_fitness[i],gpu_fitness[i]);
