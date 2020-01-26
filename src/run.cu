@@ -13,7 +13,7 @@ extern "C" {
 }
 
 #define NUM_TREES 32
-#define NUM_GENERATIONS 2
+#define NUM_GENERATIONS 100
 /*#define NUM_TREES 4000
 #define NUM_GENERATIONS 3000*/
 void process_tree(const float *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
@@ -304,7 +304,7 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
     int num_threads_in_block = 8;
 
     //Prints fitness
-    printf("---------- first fitness gpu ----------\n");
+    /*printf("---------- first fitness gpu ----------\n");
     for(int i = 0; i < NUM_TREES; i++) {
         if(i % num_threads_in_block == 0){
             printf("\n");
@@ -312,7 +312,7 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
         printf("i:%d , %f | ",i, gpu_fitness[i]);
         
     }
-    printf("\n");
+    printf("\n");*/
 
     int *dev_matrix_gen;
     cudaMalloc(&dev_matrix_gen, matrix_gen_size);
@@ -336,24 +336,24 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
     float *fitness_aux = (float*) malloc(num_blocks * sizeof(float) * 2);
     cudaMemcpy(fitness_index_aux, dev_fitness_index_aux, num_blocks * sizeof(float) * 2, cudaMemcpyDeviceToHost);
     cudaMemcpy(fitness_aux, dev_fitness_aux, num_blocks * sizeof(float) * 2, cudaMemcpyDeviceToHost);
-    printf("---------- gpu fitness aux ----------\n");
+    /*printf("---------- gpu fitness aux ----------\n");
     for(int i = 0; i < num_blocks * 2; i++) {
         printf("i:%d , %f | ",fitness_index_aux[i], fitness_aux[i]);        
     }
-    printf("\n");
+    printf("\n");*/
 
     
     //gpu_generations<<<1, NUM_TREES>>>(dev_matrix_gen, dev_fitness, dev_new_fitness);
     cudaMemcpy(matrix_gen, dev_matrix_gen, matrix_gen_size, cudaMemcpyDeviceToHost);
     cudaMemcpy(gpu_fitness, dev_new_fitness, NUM_TREES*sizeof(float), cudaMemcpyDeviceToHost);
 
-    printf("---------- PRINTING MATRIX GEN gpu ----------\n");
+    /*printf("---------- PRINTING MATRIX GEN gpu ----------\n");
     for(int i = 0; i < NUM_GENERATIONS; i++) {
         for(int j = 0; j < NUM_TREES; j++){
             printf("%d ", matrix_gen[i * NUM_TREES + j]);
         }
         printf("\n");
-    }
+    }*/
 
 }
 
@@ -371,11 +371,11 @@ void cpu_seq_version(float *population, float *target_values, int *cpu_matrix_ge
         }
         old_fitness[i] = curr / num_rows;
     }
-    printf("---------- first fitness cpu ----------\n");
+    /*printf("---------- first fitness cpu ----------\n");
     for(int i = 0; i < NUM_TREES; i++) {
         printf("%f , ", old_fitness[i]);
     }
-    printf("\n");
+    printf("\n");*/
     // second part of the algorithm
     for(int i = 0; i < NUM_TREES; i++) { //gen = 0
         cpu_matrix_gen[i] = i;
@@ -432,13 +432,13 @@ void cpu_seq_version(float *population, float *target_values, int *cpu_matrix_ge
     }
     //memcpy(fitness, new_fitness, NUM_TREES*sizeof(float));
     //memcpy(fitness, old_fitness, NUM_TREES);
-    printf("---------- PRINTING MATRIX GEN  cpu----------\n");
+    /*printf("---------- PRINTING MATRIX GEN  cpu----------\n");
     for(int i = 0; i < NUM_GENERATIONS; i++) {
         for(int j = 0; j < NUM_TREES; j++){
             printf("%d ", cpu_matrix_gen[i * NUM_TREES + j]);
         }
         printf("\n");
-    }printf("\n");
+    }printf("\n");*/
 }
 
 
