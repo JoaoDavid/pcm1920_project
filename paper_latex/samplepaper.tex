@@ -30,25 +30,22 @@ Semantic Genetic Programming, also known as Semantic GP, is a type of Evolutiona
 Aiming to not only syntactically manipulate the data to promote a better fitness evaluation, but also ensuring that the resulting function is semantically correct. Traditional implementations of genetic programs have always been done on CPU, taking advantage of its multiple cores to do parallel work. We aim to improve on the parallelization of the genetic algorithm by implementing it on the Graphics Processing Unit (GPU), taking advantage of its vast amount of processing cores, which are multiple times that of the CPU. The implementation will be done on an NVidia GPU allowing the use of the Compute Unified Device Architecture (CUDA) API, which grants us access to directly manipulate the GPU memory and threads necessary to perform fitness evaluation and crossover.
 
 
-\keywords{Semantic Genetic programming  \and GPU \and CUDA.}
+\keywords{Genetic Programming  \and GPU \and CUDA \and Machine Learning.}
 \end{abstract}
 %
 %
 %
 \section{Introduction}
 
-Traditional implementations of Semantic Genetic programming are  on CPU, usually with syntax trees that contain elements of the domain in study, whether it be logical operations, mathematical operations, among others.
+Traditional implementations of Semantic GP are  on CPU, usually with syntax trees that contain elements of the domain in study, whether it be logical operations, mathematical operations, among others.
 
 These trees are then processed given some input, and the output is compared to some target value to calculate its fitness. Fitness calculation algorithms are generally implemented on CPU, in this paper we aim to vastly improve the time required computing and evaluating fitness values by implementing an algorithm on GPU, taking advantage of its many cores and threads which allows for a vast amount of parallel computation to be done, when compared to a CPU.
 
-While modern CPU's number of cores and threads round either the single or double digits, a GPU contains thousands of both of them. This paired with quick access, cache like, shared memory we can vastly improve execution times given large data set inputs.
-
-In section 2 we explain some of the main concepts needed to understand the parallel implementation of fitness testing, in section 3 we discuss the general approach taken to parallelize fitness evaluation, which can be applied to any programming. In section 4 we explain in more detail our implementation which is written in C++ with a CUDA extension, allowing us to fully utilize all the functionality provided by the API. In section 5 we compare test results from both a parallel and sequential implementation of the fitness evaluation algorithm. In section 6 we discuss previous work done on the subject matter and compare it with our own implementation and finally we summarize all the findings in the paper and future work to be done in section 7.
+In section 2 we explain some of the main concepts needed to understand the parallel implementation of fitness testing, in section 3 we discuss the general approach taken to parallelize fitness evaluation, which can be applied to any programming. In section 4 we explain in more detail our implementation which is written in C with a CUDA extension, allowing us to fully utilize all the functionality provided by the API. In section 5 we compare test results from both a parallel and sequential implementations of the algorithm. In section 6 we discuss previous work done on the subject matter and compare it with our own implementation and finally we summarize all the findings in the paper and future work to be done in section 7.
 
 With this paper we aim to:
 \begin{itemize}
-	\item propose a parallel algorithm implemented on the GPU for fitness calculation and evaluation and genetic crossover
-	\item present an implementation of the algorithm in CUDA
+	\item To propose a parallel algorithm implemented on the GPU using the CUDA API for Semantic Genetic Programming
 	\item compare execution times of the implemented algorithm with a sequential CPU version
 \end{itemize}
 
@@ -79,7 +76,10 @@ When processing a tree through a data set row, each variable will be swapped by 
 \end{figure}
 
 
-The main parallelization applied to the algorithm is done by taking advantage of the much higher amount of threads on a GPU compared to a CPU. In order to better take advantage of all the computational power on the GPU we first have to copy all the data from CPU memory to GPU memory by allocating memory for the array using cudaMalloc(\texttt{t\_array,size}) and then copying the data currently residing on CPU memory to the newly GPU memory allocated array using cudaMemcpy(\texttt{o\_array,t\_array,size,cudaMemcpyHostToDevice}). The keyword cudaMemcpyHostToDevice signals that the array from which the contents are to be copied (\texttt{o\_array}) is residing in CPU memory and the target array to which the values are copied to (\texttt{t\_array}) is residing in the GPU memory. These are necessary steps since neither the GPU nor the CPU have direct access to each others memory region.
+An NVIDIA GPU is composed of several SM (Stream Multiprocessor), each SM having a certain amount of cores, every core contains a number of warps (groups of 32 threads).
+The processing in an NVIDIA GPU is done through the use of blocks, which are composed of a set amount of threads. Each block will be scheduled to a single SM, and every SM can schedule different blocks at a given time if it has enough resources. When choosing the number of threads within a block, it is important that the number is a multiple of 32. Because if it isn't, there will be threads of a warp doing nothing.
+
+Neither GPUs nor CPUs can directly access each others memory space. In order to cooperate, it is required to have copied memory from RAM to GPU memory (GDRR5 for instance) in order for GPUs to process data. Then the processed data must be copied back to RAM, so that the CPU may access it.
 
 To execute a method on the GPU, we have to execute a kernel call. The kernel call can receive up to 3 parameters between the \texttt{<<< >>>} brackets. The first two parameters determine the number of blocks and threads per block respectively and the last one determines the amount of shared memory between threads available (threads can only access shared memory content within the same block) in bytes, when omitted it defaults to 0.
 
@@ -169,18 +169,6 @@ After all values are calculated we then proceed to a reduction phase, in this ph
 
 \begin{figure}[!htb]
 \begin{center}
- \begin{tabular}{|c|c|c|c|c|c|}
- \hline
- 0 & 1 & 2 & 3 & 4 & 5\\
- \hline
- 2 & 2 & 2 & 2 & 2 & 2\\
- \hline
-\end{tabular}
-\end{center}
-\end{figure}
-
-\begin{figure}[!htb]
-\begin{center}
 \includegraphics[scale=0.35]{Fitness_Calculation1}
 \end{center}
 \caption{Fitness computation for a data set of 4 lines}
@@ -204,9 +192,9 @@ After all values are calculated we then proceed to a reduction phase, in this ph
 \begin{center}
 \begin{tabular}{|>{\centering\arraybackslash}p{4cm}|>{\centering\arraybackslash}p{2cm}|>{\centering\arraybackslash}p{2cm}|>{\centering\arraybackslash}p{2cm}|}
  \hline
- Graphics Card & GPU Cores & Threads & Memory \\ [0.5ex] 
+ Graphics Card & GPU Cores & CUDA Capability & GDDR5 Memory \\ [0.5ex] 
  \hline\hline
- NVidia GTX 960 & 1024 & 24 & 4GB\\  
+ NVidia GTX 960 & 1024 & 5.2 & 4GB\\  
  \hline
 \end{tabular}
 \end{center}
@@ -237,11 +225,11 @@ We presented a simple crossover algorithm when passing from one generation to th
 
 \section*{Acknowledgements}
 
-First Author wrote the part of the program implemented the phasers. Second Author implemented the MergeSort in parallel. 
+João David wrote the sequential version of the algorithm and two GPU methods, while Ye Yang wrote the other GPU method, the data set parser and the tree processing.
 
-Both authors wrote this paper, with First Author focusing on the introduction, related work and conclusions while the Second Author focused on approach and evaluation.
+Both authors wrote this paper, with João David focusing on the approach and introduction while Ye Yang focused on implementation details, related work and conclusion.
 
-Each author spent around 30 hours on this project.
+Each author spent around 40 hours on this project.
 
 \bibliographystyle{splncs04}
 \bibliography{bibliography}

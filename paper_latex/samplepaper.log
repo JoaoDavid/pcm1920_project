@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.20)  26 JAN 2020 18:55
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.20)  26 JAN 2020 22:51
 entering extended mode
 **./samplepaper.tex
 (samplepaper.tex
@@ -772,14 +772,14 @@ LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
 <Fitness_Calculation1.png, id=34, 509.65407pt x 430.60875pt>
 File: Fitness_Calculation1.png Graphic file (type png)
 <use Fitness_Calculation1.png>
-Package pdftex.def Info: Fitness_Calculation1.png  used on input line 176.
+Package pdftex.def Info: Fitness_Calculation1.png  used on input line 172.
 (pdftex.def)             Requested size: 178.38159pt x 150.7153pt.
  [5]
 
-LaTeX Warning: Reference `fig1' on page 6 undefined on input line 213.
+LaTeX Warning: Reference `fig1' on page 6 undefined on input line 209.
 
 
-Overfull \hbox (1.07155pt too wide) in paragraph at lines 221--222
+Overfull \hbox (1.07155pt too wide) in paragraph at lines 217--218
 \OT1/cmr/m/n/10 way of ge-netic pro-gram-ming, Ge-o-met-ric Se-man-tic Ge-netic
  Pro-gram-ming (GSGP)
  []
@@ -796,12 +796,12 @@ LaTeX Warning: There were undefined references.
  ) 
 Here is how much of TeX's memory you used:
  14511 strings out of 492484
- 284176 string characters out of 3122959
+ 284169 string characters out of 3122959
  339527 words of memory out of 3000000
  18560 multiletter control sequences out of 15000+200000
  10220 words of font info for 37 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 60i,13n,60p,931b,1044s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 60i,13n,60p,815b,1044s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Users/PC/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm
 /cmbx10.pfb><C:/Users/PC/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/a
 msfonts/cm/cmbx12.pfb><C:/Users/PC/AppData/Local/Programs/MiKTeX 2.9/fonts/type
@@ -822,7 +822,7 @@ al/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmti9.pfb><C:/Users/PC/Ap
 pData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt10.pfb><C:/U
 sers/PC/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt9.
 pfb>
-Output written on samplepaper.pdf (7 pages, 243576 bytes).
+Output written on samplepaper.pdf (7 pages, 244140 bytes).
 PDF statistics:
  100 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
