@@ -26,7 +26,9 @@ Ye Yang\inst{1}
 \maketitle
 
 \begin{abstract}
-Semantic Genetic programming aims to not only syntactically manipulate the data to promote a better fitness evaluation, but also ensuring that the resulting function is semantically correct. Traditional implementations of genetic programs have always been done on CPU, taking advantage of its multiple cores to do parallel work. We aim to improve on the parallelization of the genetic algorithm by implementing it on the Graphics Processing Unit (GPU), taking advantage of its vast amount of processing cores, which are multiple times that of the CPU. The implementation will be done on an NVidia GPU allowing the use of the Compute Unified Device Architecture (CUDA) API, which grants us access to directly manipulate the GPU memory and threads necessary to perform fitness evaluation and crossover.
+Semantic Genetic Programming, also known as Semantic GP, is a type of Evolutionary Algorithm (EA), a subset of machine learning. 
+Aiming to not only syntactically manipulate the data to promote a better fitness evaluation, but also ensuring that the resulting function is semantically correct. Traditional implementations of genetic programs have always been done on CPU, taking advantage of its multiple cores to do parallel work. We aim to improve on the parallelization of the genetic algorithm by implementing it on the Graphics Processing Unit (GPU), taking advantage of its vast amount of processing cores, which are multiple times that of the CPU. The implementation will be done on an NVidia GPU allowing the use of the Compute Unified Device Architecture (CUDA) API, which grants us access to directly manipulate the GPU memory and threads necessary to perform fitness evaluation and crossover.
+
 
 \keywords{Semantic Genetic programming  \and GPU \and CUDA.}
 \end{abstract}
@@ -52,27 +54,13 @@ With this paper we aim to:
 
 
 \section{Background}
-To understand the underlying principles of the implementation we first have to introduce the main concepts.
-\begin{itemize}
-	\item The semantic syntax our work will be based on will be presented as a tree structure, each node containing either a mathematical operator, a constant or a variable which can be swapped by a value from a given data set.
-	\item After passing data from a data set through a tree, the output is then compared to the target value by calculating the Mean Squared Error (MSE) which determines the tree's fitness: $$\frac{1}{n}\sum_{i=1}^{n} (O_i - T_i)^{2}$$
-\end{itemize}
 
-The main parallelization applied to the algorithm is done by taking advantage of the much higher amount of threads on a GPU compared to a CPU. In order to better take advantage of all the computational power on the GPU we first have to copy all the data from CPU memory to GPU memory by allocating memory for the array using cudaMalloc(\texttt{t\_array,size}) and then copying the data currently residing on CPU memory to the newly GPU memory allocated array using cudaMemcpy(\texttt{o\_array,t\_array,size,cudaMemcpyHostToDevice}). The keyword cudaMemcpyHostToDevice signals that the array from which the contents are to be copied (\texttt{o\_array}) is residing in CPU memory and the target array to which the values are copied to (\texttt{t\_array}) is residing in the GPU memory. These are necessary steps since neither the GPU nor the CPU have direct access to each others memory region.
+Genetic Algorithms are inspired by Nature and its biological mechanisms, take the following analogy as an example. Imagine that you are in the horse racing business, and you own a set of horses (population), some horses are better at different skills (speed, resistance, strength, etc.). When selecting horses to produce offspring (crossover and mutation), you must select them based on their fitness, which is calculated using a fitness function. In this case, it could be the average lap time from a set of tracks, better fitness values would mean lower average lap times.
 
-To execute a method on the GPU, we have to execute a kernel call. The kernel call can receive up to 3 parameters between the \texttt{<<< >>>} brackets. The first two parameters determine the number of blocks and threads per block respectively and the last one determines the amount of shared memory between threads available (threads can only access shared memory content within the same block) in bytes, when omitted it defaults to 0.
-
-\section{Approach}
-The main genetic algorithm to crossover different trees of computation takes into account the following variables:
-\begin{itemize}
-	\item \textit{N} $\rightarrow$ \ the total number of trees
-	\item \textit{gen} $\rightarrow$ \ the current generation cycle
-	\item \textit{threadId} $\rightarrow$ \ the ID of a GPU thread
-\end{itemize}
-
-Each node on a syntax can hold a literal value, a variable or a mathematical operation. When processing a tree through a data set, each variable will be swapped by the corresponding value in the data set according to the variables index. In Figure \ref{syntree} we can see the tree representation of the mathematical formula $x0 * (x1+4)$ which is then processed according to a data set line containing the values: $(0.5\quad 25.3\quad 6.2\quad 12)$\ . The values within the data set that are not referenced by any variable in the tree are ignored, the final value computed is compared with the target value (12) which will evaluate the fitness of the tree.
-
+The semantic syntax our work will be based on will be presented as a tree structure, each node containing either a mathematical operator, a literal or a variable which can be swapped by a value from a given data set.
+When processing a tree through a data set row, each variable will be swapped by the corresponding value in the data set according to the variable column index. In Figure \ref{syntree} we can see the tree representation of the mathematical formula $x0 * (x1+4)$ which is then processed according to a data set row containing the values $(0.5\quad 25.3\quad 6.2\quad 12)$. The values within the data set that are not referenced by any variable in the tree are ignored.
 \begin{figure}
+
 \hfil
 \begin{tikzpicture}
   \Tree [.* [.x0 ] 
@@ -90,18 +78,45 @@ Each node on a syntax can hold a literal value, a variable or a mathematical ope
 \label{syntree}
 \end{figure}
 
-Given the initial data set, we first have to run the values through all the generated trees, after which we compute the respective fitness values for every single tree and store it in a matrix. We then place the indexes of each tree in the first row of a $N * gen$ sized matrix. Each column represents a concatenation of trees by summation, the trees are represented by their indexes from 0 to N-1.
 
-The algorithm works as follows: for every even generation cycle, the GPU threads with even IDs will look for the best fitness only within the even numbered indexes on the matrix. The GPU threads with odd numbered IDs will do the same but on odd indexes. When the best fitness is found, the index of the column to which it belongs will be appended to that generation cycle (or row).
+The main parallelization applied to the algorithm is done by taking advantage of the much higher amount of threads on a GPU compared to a CPU. In order to better take advantage of all the computational power on the GPU we first have to copy all the data from CPU memory to GPU memory by allocating memory for the array using cudaMalloc(\texttt{t\_array,size}) and then copying the data currently residing on CPU memory to the newly GPU memory allocated array using cudaMemcpy(\texttt{o\_array,t\_array,size,cudaMemcpyHostToDevice}). The keyword cudaMemcpyHostToDevice signals that the array from which the contents are to be copied (\texttt{o\_array}) is residing in CPU memory and the target array to which the values are copied to (\texttt{t\_array}) is residing in the GPU memory. These are necessary steps since neither the GPU nor the CPU have direct access to each others memory region.
 
-For every odd generation cycle, the GPU threads within the first half of the X axis in the tree index matrix will look for the best fitness within the first half of the matrix, the rest of the threads will search the other half. To each half of the row of the current generation cycle, the index of best fitness of the respective half will be appended.
+To execute a method on the GPU, we have to execute a kernel call. The kernel call can receive up to 3 parameters between the \texttt{<<< >>>} brackets. The first two parameters determine the number of blocks and threads per block respectively and the last one determines the amount of shared memory between threads available (threads can only access shared memory content within the same block) in bytes, when omitted it defaults to 0.
 
-Given this alternating crossover algorithm, we can achieve a less linear evolution from generation to generation of each sequence. At Algorithm~\ref{crossover_alg} we can see a pseudo code representation of the algorithm.
+\section{Approach}
+The algorithm starts by generating N trees, and then processing them based on the data set values. For each tree and for each row, there is an output value $V_{i,j}$, where \textit{i} is the tree index, and \textit{j} the row index (row number - 1) in the data set file.
+The Fitness ($F_i$) for each tree is then calculated using the Mean Squared Error (MSE) and stored in an array of size N indexed by the tree index. $Y_j$ is the target value of row's number \textit{j}. $$F_i = \frac{1}{N}\sum_{i=1}^{N} (V_{i,j} - Y_j)^{2}$$
+
+After that, a matrix $A$[G$\times$N] is created, where G is the number of generations, $a_{i,j}$ is the tree index with which the tree \textit{j} crossed over with at generation \textit{i}.
+\begin{equation*}
+A_{G,N} = 
+\begin{bmatrix}
+0 & 1 & \cdots & N-1 \\
+a_{2,1} & a_{2,2} & \cdots & a_{2,N} \\
+\vdots  & \vdots  & \ddots & \vdots  \\
+a_{G,1} & a_{G,2} & \cdots & a_{G,N} 
+\end{bmatrix}
+\end{equation*}
+
+For every even generation cycle, trees will be divided in two groups, one group with index $<$ N/2 and the other with index $\geq$ N/2, trees only crossover trees within the same group.
+
+For every odd generation cycle, trees will be divided in two groups, one group with odd index and the other with even index, trees only crossover trees within the same group.
+
+The fitness array obtained from the previous iteration will be split in two groups, (based on the current generation cycle) in the same way mentioned above, the index of the best fitness from each group will be the tree index that all the trees from the same group will crossover with.
+
+When a tree \textit{a} is crossing over with a tree \textit{b}, the result of said crossover will be stored in a new fitness array at \textit{a}'s index. The result would be:$$newFitness[a_{index}] = oldFitness[a_{index}] + sigmoid(oldFitness[b_{index}])$$
+
+Given this alternating crossover algorithm, we can achieve a less linear evolution from generation to generation. Algorithm~\ref{crossover_alg} is a pseudo code representation of the algorithm.
 
 \begin{algorithm}
 \caption{Tree crossover}
 \begin{algorithmic}[1]
 \Procedure{TreeCrossover}{}
+\State \textbf{int[G][N]} \textit{A}
+\For{$i = 0;\ i < N;\ i++$}
+	\State {A[0][i] = i}
+\EndFor
+\For{$gen = 1;\ gen < G;\ gen++$}
 \State \textbf{int} \textit{max}
 \If {$\textit{gen} \ \%\ 2 == 0$} 
 	\For{$i = threadId\ \%\ 2;\ i < N;\ i+=2$}
@@ -117,6 +132,7 @@ Given this alternating crossover algorithm, we can achieve a less linear evoluti
 	\EndFor
 \EndIf
 \EndIf
+\EndFor
 \State \Return \textit{max}
 \EndProcedure
 \end{algorithmic}
@@ -133,7 +149,7 @@ To store and calculate the values, a set number of random syntax trees have to b
 	\item The tree is traversed in postorder so that the root operation or value is read last
 	\item If either a literal or a variable are present, they are pushed into the stack
 	\item If a mathematical operation is read, 2 values are popped out of the stack for computing, and the resulting value is pushed back into the stack
-	\item At the end of the processing, the final value is popped from the stack and stored in a result matrix of size $$N_{trees}*dataset_{rows}$$ with each row representing the calculated values for a given data set row by a syntax tree and each column the resulting values to compare with the target values.
+	\item At the end of the processing, the final value is popped from the stack and stored in a result matrix of size $N_{trees}*dataset_{rows}$ with each row representing the calculated values for a given data set row by a syntax tree and each column the resulting values to compare with the target values.
 \end{itemize}
 
 \subsection{GPU Parallelization}
