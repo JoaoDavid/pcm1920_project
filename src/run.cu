@@ -168,6 +168,8 @@ __global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_
             if (threadIdx.x < 2) {
                 dev_matrix_gen[index_matrix_global] = index_fitness[threadIdx.x];
                 dev_new_fitness[index_fitness_global] = values_fitness[threadIdx.x];
+                dev_fitness_aux[blockIdx.x * 2 + threadIdx.x] = values_fitness[threadIdx.x];
+                dev_fitness_index_aux[blockIdx.x * 2 + threadIdx.x] = index_fitness[threadIdx.x];
             }
             
         } else { ////////////////////////////////////
@@ -206,11 +208,11 @@ __global__ void gpu_generations_third(int gen, int *dev_matrix_gen, float *dev_o
     int min_fitness_index = 0;
 
     if (gen % 2 != 0) {
-        min_fitness_index = index_fitness_global % 2;
-        for(int i = min_fitness_index + 2; i < gridDim.x; i++) {
+        min_fitness_index = threadIdx.x % 2;
+        for(int i = min_fitness_index + 2; i < gridDim.x*2; i+=2) {
             min_fitness_index = (dev_fitness_aux[min_fitness_index] < dev_fitness_aux[i] ? min_fitness_index : i);
         }
-        //dev_matrix_gen[index_matrix_global] = dev_fitness_index_aux[min_fitness_index];
+        dev_matrix_gen[index_matrix_global] = dev_fitness_index_aux[min_fitness_index];
 
         dev_new_fitness[index_fitness_global] = dev_old_fitness[index_fitness_global] + sigmoid(dev_old_fitness[index_fitness_global]);
         __syncthreads();
@@ -318,9 +320,9 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
     
     int num_blocks = NUM_TREES / num_threads_in_block;    
     float *dev_fitness_aux;
-    cudaMalloc(&dev_fitness_aux, num_blocks * sizeof(float));
+    cudaMalloc(&dev_fitness_aux, num_blocks * sizeof(float) * 2);
     int *dev_fitness_index_aux;
-    cudaMalloc(&dev_fitness_index_aux, num_blocks * sizeof(int));
+    cudaMalloc(&dev_fitness_index_aux, num_blocks * sizeof(int) * 2);
 
     int shared_memory_size = (sizeof(float) * num_threads_in_block) + (sizeof(int) * num_threads_in_block);
 
@@ -330,6 +332,15 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
         gpu_generations_third<<<num_blocks,num_threads_in_block,shared_memory_size>>>(gen, dev_matrix_gen, dev_fitness, dev_new_fitness, dev_fitness_aux, dev_fitness_index_aux);
 
     }
+    int *fitness_index_aux = (int*) malloc(num_blocks * sizeof(float) * 2);
+    float *fitness_aux = (float*) malloc(num_blocks * sizeof(float) * 2);
+    cudaMemcpy(fitness_index_aux, dev_fitness_index_aux, num_blocks * sizeof(float) * 2, cudaMemcpyDeviceToHost);
+    cudaMemcpy(fitness_aux, dev_fitness_aux, num_blocks * sizeof(float) * 2, cudaMemcpyDeviceToHost);
+    printf("---------- gpu fitness aux ----------\n");
+    for(int i = 0; i < num_blocks * 2; i++) {
+        printf("i:%d , %f | ",fitness_index_aux[i], fitness_aux[i]);        
+    }
+    printf("\n");
 
     
     //gpu_generations<<<1, NUM_TREES>>>(dev_matrix_gen, dev_fitness, dev_new_fitness);
