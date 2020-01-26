@@ -12,10 +12,8 @@ extern "C" {
     #include "../include/dataset_parser.h"
 }
 
-#define NUM_TREES 32
-#define NUM_GENERATIONS 100
-/*#define NUM_TREES 4000
-#define NUM_GENERATIONS 3000*/
+#define NUM_TREES 4096
+#define NUM_GENERATIONS 5000
 void process_tree(const float *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 void process_tree_aux(const float *dataset, int num_vars, int row_index, struct stack_t* stack, struct node_t* node);
 
@@ -200,9 +198,9 @@ __global__ void gpu_generations_second(int gen, int *dev_matrix_gen, float *dev_
 }
 
 __global__ void gpu_generations_third(int gen, int *dev_matrix_gen, float *dev_old_fitness, float *dev_new_fitness, float *dev_fitness_aux, int *dev_fitness_index_aux) {
-    extern __shared__ float shared[];
+    /*extern __shared__ float shared[];
     int* index_fitness = (int*)&shared[0];
-    float* values_fitness = (float*)&shared[blockDim.x];
+    float* values_fitness = (float*)&shared[blockDim.x];*/
     int index_fitness_global = blockDim.x * blockIdx.x + threadIdx.x; //certo
     int index_matrix_global = gen * gridDim.x * blockDim.x + index_fitness_global;//certo
     int min_fitness_index = 0;
@@ -289,7 +287,6 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
     }*/
 
     gpu_calc_init_fitness<<<NUM_TREES, num_rows, sizeof(float) * num_rows>>>(dev_population, dev_target_values, dev_fitness);
-    cudaMemcpy(population, dev_population, population_size, cudaMemcpyDeviceToHost);
     cudaMemcpy(gpu_fitness, dev_fitness, NUM_TREES*sizeof(float), cudaMemcpyDeviceToHost);
 
     //Prints dataset content
@@ -301,7 +298,7 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
         printf("\n");
     }*/
     
-    int num_threads_in_block = 8;
+    int num_threads_in_block = 512;
 
     //Prints fitness
     /*printf("---------- first fitness gpu ----------\n");
@@ -325,25 +322,13 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
     cudaMalloc(&dev_fitness_index_aux, num_blocks * sizeof(int) * 2);
 
     int shared_memory_size = (sizeof(float) * num_threads_in_block) + (sizeof(int) * num_threads_in_block);
-
+    
     gpu_generations_second<<<num_blocks,num_threads_in_block,shared_memory_size>>>(0, dev_matrix_gen, dev_fitness, dev_new_fitness, dev_fitness_aux, dev_fitness_index_aux);
     for(int gen = 1; gen < NUM_GENERATIONS; gen++){
         gpu_generations_second<<<num_blocks,num_threads_in_block,shared_memory_size>>>(gen, dev_matrix_gen, dev_fitness, dev_new_fitness, dev_fitness_aux, dev_fitness_index_aux);
-        gpu_generations_third<<<num_blocks,num_threads_in_block,shared_memory_size>>>(gen, dev_matrix_gen, dev_fitness, dev_new_fitness, dev_fitness_aux, dev_fitness_index_aux);
+        gpu_generations_third<<<num_blocks,num_threads_in_block>>>(gen, dev_matrix_gen, dev_fitness, dev_new_fitness, dev_fitness_aux, dev_fitness_index_aux);
 
     }
-    int *fitness_index_aux = (int*) malloc(num_blocks * sizeof(float) * 2);
-    float *fitness_aux = (float*) malloc(num_blocks * sizeof(float) * 2);
-    cudaMemcpy(fitness_index_aux, dev_fitness_index_aux, num_blocks * sizeof(float) * 2, cudaMemcpyDeviceToHost);
-    cudaMemcpy(fitness_aux, dev_fitness_aux, num_blocks * sizeof(float) * 2, cudaMemcpyDeviceToHost);
-    /*printf("---------- gpu fitness aux ----------\n");
-    for(int i = 0; i < num_blocks * 2; i++) {
-        printf("i:%d , %f | ",fitness_index_aux[i], fitness_aux[i]);        
-    }
-    printf("\n");*/
-
-    
-    //gpu_generations<<<1, NUM_TREES>>>(dev_matrix_gen, dev_fitness, dev_new_fitness);
     cudaMemcpy(matrix_gen, dev_matrix_gen, matrix_gen_size, cudaMemcpyDeviceToHost);
     cudaMemcpy(gpu_fitness, dev_new_fitness, NUM_TREES*sizeof(float), cudaMemcpyDeviceToHost);
 
@@ -360,9 +345,7 @@ void gpu_preparation(float *population, float *target_values, int *matrix_gen, f
 
 
 void cpu_seq_version(float *population, float *target_values, int *cpu_matrix_gen, float *old_fitness, int num_rows) {
-    //float *old_fitness = (float*) malloc(NUM_TREES * sizeof(float));
     float *new_fitness = (float*) malloc(NUM_TREES * sizeof(float));
-    //float *aux;
 
     for(int i = 0; i < NUM_TREES; i++) {
         float curr = 0;
@@ -532,7 +515,7 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < NUM_TREES; i++) {
         node_destroy(trees[i]);
     }    
-
+////TODO apagar no fim
     float espilon = 0.1;
     for(int i = 0; i < NUM_TREES; i++) {
         if (cpu_fitness[i] - gpu_fitness[i] >= espilon) {
