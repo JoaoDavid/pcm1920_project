@@ -98,9 +98,9 @@ a_{G,1} & a_{G,2} & \cdots & a_{G,N}
 \end{bmatrix}
 \end{equation*}
 
-For every even generation cycle, trees will be divided in two groups, one group with index $<$ N/2 and the other with index $\geq$ N/2, trees only crossover trees within the same group.
-
 For every odd generation cycle, trees will be divided in two groups, one group with odd index and the other with even index, trees only crossover trees within the same group.
+
+For every even generation cycle, trees will be divided in two groups, one group with index $<$ N/2 and the other with index $\geq$ N/2, trees only crossover trees within the same group.
 
 The fitness array obtained from the previous iteration will be split in two groups, (based on the current generation cycle) in the same way mentioned above, the index of the best fitness from each group will be the tree index that all the trees from the same group will crossover with.
 
@@ -113,27 +113,35 @@ Given this alternating crossover algorithm, we can achieve a less linear evoluti
 \begin{algorithmic}[1]
 \Procedure{TreeCrossover}{}
 \State \textbf{int[G][N]} \textit{A}
+\State \textbf{float[N]} \textit{oldFitness}
+\State \textbf{float[N]} \textit{newFitness}
 \For{$i = 0;\ i < N;\ i++$}
 	\State {A[0][i] = i}
 \EndFor
 \For{$gen = 1;\ gen < G;\ gen++$}
-\State \textbf{int} \textit{max}
-\If {$\textit{gen} \ \%\ 2 == 0$} 
-	\For{$i = threadId\ \%\ 2;\ i < N;\ i+=2$}
-		\State {find highest fitness and store in \textit{max}}
+\If {$\textit{gen} \ \%\ 2 	\neq 0$}
+	\State \textbf{int} \textit{bestFitOdd}
+	\State \textbf{int} \textit{bestFitEven} 
+	\For{$i = 0 ;\ i < N;\ i++$}
+		\State {find best fitness with odd index and store it in \textit{bestFitOdd}}
+		\State {find best fitness with even index and store it in \textit{bestFitEven}}		
 	\EndFor
-\Else \If {$threadId \ < N/2$}
-	\For{$i = 0;\ i < N/2;\ i++$}
-		\State {find highest fitness and store in \textit{max}}
-	\EndFor
+	\State A[gen][odd indexes] = bestFitOdd
+	\State A[gen][even indexes] = bestFitEven
 \Else
-	\For{$i = N/2;\ i < N;\ i++$}
-		\State {find highest fitness and store in \textit{max}}
+	\State \textbf{int} \textit{bestFitFirstHalf}
+	\State \textbf{int} \textit{bestFitSecondHalf}
+	\For{$i = 0 ;\ i < N;\ i++$}
+		\State {find best fitness with index $<$ N/2 and store it in \textit{bestFitFirstHalf}}
+		\State {find best fitness with index $\geq$ N/2 and store it in \textit{bestFitSecondHalf}}		
 	\EndFor
+	\State A[gen][index $<$ N/2] = bestFitFirstHalf
+	\State A[gen][index $\geq$ N/2] = bestFitSecondHalf
 \EndIf
-\EndIf
+\For{$i = 0 ;\ i < N;\ i++$}
+	\State newFitness[i] = oldFitness[i] + sigmoid(oldFitness[A[gen][i])
 \EndFor
-\State \Return \textit{max}
+\EndFor
 \EndProcedure
 \end{algorithmic}
 \label{crossover_alg}
