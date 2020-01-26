@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.19)  25 JAN 2020 18:11
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.19)  26 JAN 2020 14:35
 entering extended mode
 **./samplepaper.tex
 (samplepaper.tex
@@ -710,14 +710,14 @@ LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
 <Fitness_Calculation1.png, id=34, 685.56125pt x 777.90625pt>
 File: Fitness_Calculation1.png Graphic file (type png)
 <use Fitness_Calculation1.png>
-Package pdftex.def Info: Fitness_Calculation1.png  used on input line 147.
+Package pdftex.def Info: Fitness_Calculation1.png  used on input line 160.
 (pdftex.def)             Requested size: 239.95003pt x 272.27126pt.
 
 
-LaTeX Warning: Reference `fig1' on page 5 undefined on input line 184.
+LaTeX Warning: Reference `fig1' on page 5 undefined on input line 197.
 
 [5]
-Overfull \hbox (1.07155pt too wide) in paragraph at lines 192--193
+Overfull \hbox (1.07155pt too wide) in paragraph at lines 205--206
 \OT1/cmr/m/n/10 way of ge-netic pro-gram-ming, Ge-o-met-ric Se-man-tic Ge-netic
  Pro-gram-ming (GSGP)
  []
@@ -756,7 +756,7 @@ nts/type1/public/amsfonts/cm/cmti10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type
 1/public/amsfonts/cm/cmti9.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/
 amsfonts/cm/cmtt10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts
 /cm/cmtt9.pfb>
-Output written on samplepaper.pdf (7 pages, 240956 bytes).
+Output written on samplepaper.pdf (7 pages, 242612 bytes).
 PDF statistics:
  100 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)

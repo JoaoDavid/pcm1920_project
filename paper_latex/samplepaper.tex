@@ -55,10 +55,12 @@ With this paper we aim to:
 To understand the underlying principles of the implementation we first have to introduce the main concepts.
 \begin{itemize}
 	\item The semantic syntax our work will be based on will be presented as a tree structure, each node containing either a mathematical operator, a constant or a variable which can be swapped by a value from a given data set.
-	\item To start off the program, we must introduce an initial data set. The data set will be read as a text file, each line of the text file containing randomly generated values and a final target value. These random data set values are to be added to trees that contain variables, each variable having its own index to determine which random value to swap the variable by. After all the necessary swaps are made, the final value is computed for each line of the data set and the fitness of the syntax tree is determined by calculating the Mean Squared Error (MSE) between the calculated values (O) and the target values (T): $$\frac{1}{n}\sum_{i=1}^{n} (O_i - T_i)^{2}$$
+	\item After passing data from a data set through a tree, the output is then compared to the target value by calculating the Mean Squared Error (MSE) which determines the tree's fitness: $$\frac{1}{n}\sum_{i=1}^{n} (O_i - T_i)^{2}$$
 \end{itemize}
 
 The main parallelization applied to the algorithm is done by taking advantage of the much higher amount of threads on a GPU compared to a CPU. In order to better take advantage of all the computational power on the GPU we first have to copy all the data from CPU memory to GPU memory by allocating memory for the array using cudaMalloc(\texttt{t\_array,size}) and then copying the data currently residing on CPU memory to the newly GPU memory allocated array using cudaMemcpy(\texttt{o\_array,t\_array,size,cudaMemcpyHostToDevice}). The keyword cudaMemcpyHostToDevice signals that the array from which the contents are to be copied (\texttt{o\_array}) is residing in CPU memory and the target array to which the values are copied to (\texttt{t\_array}) is residing in the GPU memory. These are necessary steps since neither the GPU nor the CPU have direct access to each others memory region.
+
+To execute a method on the GPU, we have to execute a kernel call. The kernel call can receive up to 3 parameters between the \texttt{<<< >>>} brackets. The first two parameters determine the number of blocks and threads per block respectively and the last one determines the amount of shared memory between threads available (threads can only access shared memory content within the same block) in bytes, when omitted it defaults to 0.
 
 \section{Approach}
 The main genetic algorithm to crossover different trees of computation takes into account the following variables:
@@ -68,7 +70,7 @@ The main genetic algorithm to crossover different trees of computation takes int
 	\item \textit{threadId} $\rightarrow$ \ the ID of a GPU thread
 \end{itemize}
 
-Each node on a syntax can hold a literal value, a variable or a mathematical operation. When processing a tree through a data set, each variable will be swapped by the corresponding value in the data set according to the variables index. In Figure \ref{syntree} we can see the tree representation of the mathematical formula $x0 * (x1+4)$ which is then processed according to a data set line containing the values: $0.5\quad 25.3\quad 6.2\quad 12$\ . The values within the data set that are not referenced by any variable in the tree are ignored, the final value computed is compared with the target value (12) which will evaluate the fitness of the tree.
+Each node on a syntax can hold a literal value, a variable or a mathematical operation. When processing a tree through a data set, each variable will be swapped by the corresponding value in the data set according to the variables index. In Figure \ref{syntree} we can see the tree representation of the mathematical formula $x0 * (x1+4)$ which is then processed according to a data set line containing the values: $(0.5\quad 25.3\quad 6.2\quad 12)$\ . The values within the data set that are not referenced by any variable in the tree are ignored, the final value computed is compared with the target value (12) which will evaluate the fitness of the tree.
 
 \begin{figure}
 \hfil
@@ -141,6 +143,17 @@ $V_{i,j}$ is the value calculated by a tree of ID \textit{i} on line \textit{j} 
 
 After all values are calculated we then proceed to a reduction phase, in this phase the amount of threads working on adding up all the values is reduced by half with each step until it reaches 1, which will be the final value to be divided by \texttt{num\_rows} which will equal to the MSE of the computed value and the target value i.e. the fitness of the tree. Since all blocks work in parallel, the complexity of the reduction algorithm is $O(log(n))$.
 
+\begin{figure}[!htb]
+\begin{center}
+ \begin{tabular}{|c|c|c|c|c|c|}
+ \hline
+ 0 & 1 & 2 & 3 & 4 & 5\\
+ \hline
+ 2 & 2 & 2 & 2 & 2 & 2\\
+ \hline
+\end{tabular}
+\end{center}
+\end{figure}
 
 \begin{figure}[!htb]
 \begin{center}
@@ -169,7 +182,7 @@ After all values are calculated we then proceed to a reduction phase, in this ph
  \hline
  Graphics Card & GPU Cores & Threads & Memory \\ [0.5ex] 
  \hline\hline
- Intel Xeon X5670 & 1024 & 24 & 4GB\\  
+ NVidia GTX 960 & 1024 & 24 & 4GB\\  
  \hline
 \end{tabular}
 \end{center}
@@ -189,15 +202,14 @@ Here you should discuss the results on a high level. For instance, based on our 
 
 \section{Related Work}
 
-Alberto Moraglio, Krzysztof Krawiec, and Colin G. Johnson introduced a new way of genetic programming, Geometric Semantic Genetic Programming (GSGP) which consists in changing the semantics of the functions directly. Their work in regards to fitness evaluation, tree mutation and crossover is far more complex given that we only accounted for mutation by concatenation with sums of trees. However the implementation of the genetic algorithm was done on CPU which makes performance considerably slower if it were implemented on GPU.
+Alberto Moraglio, Krzysztof Krawiec, and Colin G. Johnson introduced a new way of genetic programming, Geometric Semantic Genetic Programming (GSGP) which consists in changing the semantics of the functions directly. Their work in regards to fitness evaluation, tree mutation and crossover is far more complex than ours given that we only accounted for mutation by concatenation with sums of trees. However the implementation of the genetic algorithm was done on CPU which makes performance considerably slower if it were implemented on GPU.
 
 
 \section{Conclusions}
 
-Here you should resume the major conclusions taken from discussion. Ideally, these should align with the objectives introduced in the introduction.
+In this paper, we proposed a parallel GPU algorithm to both calculate and evaluate fitness on a genetic program, by applying 2 different crossover techniques. We concluded that GPU parallelization significantly benefits the execution time when passing from one generation to the next, by dynamically distributing work across the many GPU threads available. However, the size of the initial data set must be taken into account, as smaller data sets may be quicker to compute on the CPU due to the significant overhead when transitioning from CPU memory to GPU memory. Thus we must define a cutoff mechanism between CPU and GPU execution which can be determined in future tests.
 
-
-You should also list the future work, i. e., tasks and challenges that were outside your scope, but are relevant.
+We presented a simple crossover algorithm when passing from one generation to the next, in future work we would like to implement tree mutations and crossover between trees rather than the fitness calculated with each passing generation. The implementation of a CPU parallel version of the algorithm would also compliment the results obtained in this paper, so a comparison between the two parallel frameworks can be made.
 
 \section*{Acknowledgements}
 
