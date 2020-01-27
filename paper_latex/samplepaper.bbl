@@ -1,0 +1,18 @@
+\begin{thebibliography}{1}
+
+\bibitem{DBLP:conf/ppsn/2012-1}
+Carlos A.~Coello Coello, Vincenzo Cutello, Kalyanmoy Deb, Stephanie Forrest,
+  Giuseppe Nicosia, and Mario Pavone, editors.
+\newblock {\em Parallel Problem Solving from Nature - {PPSN} {XII} - 12th
+  International Conference, Taormina, Italy, September 1-5, 2012, Proceedings,
+  Part {I}}, volume 7491 of {\em Lecture Notes in Computer Science}. Springer,
+  2012.
+
+\bibitem{DBLP:conf/eurogp/2007}
+Marc Ebner, Michael O'Neill, Anik{\'{o}} Ek{\'{a}}rt, Leonardo Vanneschi, and
+  Anna Esparcia{-}Alc{\'{a}}zar, editors.
+\newblock {\em Genetic Programming, 10th European Conference, EuroGP 2007,
+  Valencia, Spain, April 11-13, 2007, Proceedings}, volume 4445 of {\em Lecture
+  Notes in Computer Science}. Springer, 2007.
+
+\end{thebibliography}
