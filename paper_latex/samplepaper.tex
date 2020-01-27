@@ -161,11 +161,28 @@ To store and calculate the values, a set number of random syntax trees have to b
 \end{itemize}
 
 \subsection{GPU Parallelization}
-After all the values are calculated and stored in the array, we then proceed to the computation of the fitness for all trees for the first generation. In Figure~\ref{fitness_calc} we present an example of fitness calculation with a data set of 4 lines, meaning that each tree computes 4 different values which are compared to the 4 target values to determine the MSE and consequently the fitness of the tree. Each tree is processed by a block (an abstract representation of a group of executing threads) which will have its own ID that can be extracted with the built in keyword \textit{blockIdx.x}. The \textit{.x} termination means we are extracting the ID along the \textit{x} axis, since the kernel is launched in 1 dimension, both the \textit{y} and \textit{z} values are 0.
+Just like mentioned in the Approach section, after processing the trees based on the data set values, we are left with a set of $V_{i,j}$ values. We will use the GPU to perform a reduction (Figure~\ref{fitness_calc}), obtaining the Mean Squared Error, which will be the initial fitness value.
 
-$V_{i,j}$ is the value calculated by a tree of ID \textit{i} on line \textit{j} of the data set and $T_{j}$ the respective target value. Each $(V_{i,j} - T_{j})^{2}$ value is calculated by a single thread which is able to compute the correct index on the array by calculating its position relative to its own ID (\textit{threadIdx.x}) and the block's ID in the following manner: array[$(blockIdx.x * num\_rows) + threadIdx.x$].
+In Figure~\ref{fitness_calc} we present an example of initial fitness calculation with a data set of 4 lines, meaning that each tree computes 4 different $V_{i,j}$ values which are compared to the 4 target values $Y_j$ to determine the MSE and consequently the fitness of the tree. Each tree is processed by a block with the number of threads being the same as the number of lines (4 in this case) which will have its own ID that can be extracted with the built in keyword \textit{blockIdx.x}. The \textit{.x} termination means we are extracting the ID along the \textit{x} axis, since the kernel is launched in 1 dimension, both the \textit{y} and \textit{z} values are 0.
 
-After all values are calculated we then proceed to a reduction phase, in this phase the amount of threads working on adding up all the values is reduced by half with each step until it reaches 1, which will be the final value to be divided by \texttt{num\_rows} which will equal to the MSE of the computed value and the target value i.e. the fitness of the tree. Since all blocks work in parallel, the complexity of the reduction algorithm is $O(log(n))$.
+$V_{i,j}$ is the value calculated by a tree of index \textit{i} on row index \textit{j} of the data set and $Y_{j}$ the respective target value. Each $(V_{i,j} - Y_{j})^{2}$ value is calculated by a single thread.
+
+After all values are calculated we then proceed to a reduction phase, in this phase the amount of threads working on adding up all the values is reduced by half with each step until it reaches 1 (\textit{threadId.x} $<$ 1), which will be the final value to be divided by \texttt{num\_rows} resulting in the MSE, which will be the fitness value for the tree with index equal to \textit{blockId.x}. Since all blocks work in parallel, the complexity of the reduction algorithm is $O(log(n))$.
+
+After calculating the initial fitness for all trees, we can then proceed apply the GPU version of the algorithm described in Algorithm 1. Due to the way the algorithm is implemented, the correct partitioning of the array in blocks can be achieved only if the number of trees is a power of 2.
+
+The default value for the number of threads per block is 512 (multiple of 32), the number of blocks to be launched is then calculated by dividing the number of trees by 512 (threads per block).
+
+We then perform a reduction using the kernel call of the method \texttt{gpu\_phase\_one}, each block will find the best fitness and its corresponding index in the fitness array previously calculated within the following indexes of said array: $$[\textit{blockDim.x} * \textit{blockIdx.x} + 0; \textit{blockDim.x} * \textit{blockIdx.x} + 512[$$
+After this, we need to synchronize all blocks in order to find the best fitness and its index in the fitness array by comparing the results from each block. We do this by using another kernel call \texttt{gpu\_phase\_two} with the same blocks/threads per block as the previous one. This kernel call will look up the values written to the auxiliary arrays \texttt{dev\_fitness\_aux} and \texttt{dev\_fitness\_index\_aux} by the \texttt{gpu\_phase\_one} kernel call. The values are written and read from said arrays based on whether the current generation is odd or even.
+
+For odd generation cycles, every odd threadIdx.x from all blocks will find the best fitness value by only looking up odd indexes of the auxiliary arrays, while even threadIdx.x will do the same but for even indexes of said auxiliary arrays.
+
+For even generation cycles, blocks with blockIdx.x $<$ gridDim.x/2 will find the best fitness value by only looking up indexes $<$ gridDim.x/2 on the auxiliary arrays, while blocks with blockIdx.x $\geq$ gridDim.x/2 will do the same but for indexes $\geq$ gridDim.x/2.
+
+After finding the best fitness \textit{x} and the corresponding index \textit{i}, every thread of every block will write to the $A_{G,N}$ matrix the index of the tree with the best fitness, and then will write to the \texttt{new\_fitness} array the fitness of crossing over the tree at indexes threadIdx.x and \textit{i}, using the fitness value of the tree threadIdx.x from the previous fitness array plus the sigmoid of the best fitness value just discovered, \textit{x}.
+
+Then a new generation will start, where the \texttt{new\_fitness} will now be the previous fitness array. Once all the generations have passed, the values in the matrix $A_{G,N}$ and \texttt{new\_fitness} will be copied to RAM.
 
 \begin{figure}[!htb]
 \begin{center}
